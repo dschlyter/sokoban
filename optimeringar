@@ -1,0 +1,15 @@
+tänkbara optimeringar:
+
+A*:
+snabbare heuristik (just nu: boxes*goalpos = n^2)
+bättre heuristik (mindre admissible, söker djupare i trädet)
+mer optad container än vector i A* (opassande för prioritetskö?)
+effektivare goal-test (just nu n^2 i värsta fall, men oftast snabbare)
+
+states:
+snabbare att hitta lådor i states (accesstid O(n), treemap istället?)
+inte putta lådor till fail-väggar (förberäknade i map)
+spara minne genom att inte lagra full history i varje state
+undvika duplicated states (med zobrist hashing?)
+pi-coral finding
+
