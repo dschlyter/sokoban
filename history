@@ -1,0 +1,13 @@
+Running on seven, 2x quad core Xeon 3GHz, 32 GB memory
+
+A* with "boxes nearest goal heuristic"
+No map solveable
+
+implementing zobrist hashing
+Map 1: 0.005s, 734 expanded nodes
+Map 2: 34.4s, 3.96 milion expanded nodes
+
+deadlock detection: checking corners
+Map 1: 0.003s, 294 expanded nodes
+Map 2: 14.8s, 1.89 milion expanded nodes
+

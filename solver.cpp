@@ -33,61 +33,9 @@ U64 Solver::zobristHash(State state, int width, int secondStart) {
 	return key;
 }
 
-void Solver::printState(State state, Map map) {
-	cout << "Depth: " << state.getHistory().size() << endl;
-	for (int y = 0; y < map.height(); y++) {
-		for (int x = 0; x < map.width(); x++) {
-			Coordinate tmp;
-			tmp.first = x;
-			tmp.second = y;
-			if (map.isWall(tmp)) {
-				cout << "#";
-			}
-			else if (state.getPlayerPosition() == tmp) {
-				cout << "x";
-			}
-			else {
-				vector<Coordinate> boxes = state.getBoxes();
-				bool done = false;
-				for (int i = 0; i < boxes.size(); i++) {
-					if (boxes[i].first == x && boxes[i].second == y) {
-						done = true;
-						cout << "o";
-						break;
-					}
-				}
-				if (!done) {
-					vector<Coordinate> goals = map.getGoals();
-					for (int i = 0; i < goals.size(); i++) {
-						if (goals[i].first == x && goals[i].second == y) {
-							done = true;
-							cout << "/";
-							break;
-						}
-					}
-					if (!done) {
-						cout << ".";
-					}
-				}
-			}
-		}
-		cout << endl;
-	}
-	cout << endl;
-	cout << endl;
-	for (int i = 0; i < 10000; i++) {
-		for (int j = 0; j < 25000; j++) {
-			if (j % 12 == 132) {
-				cout << endl;
-			}
-		}	
-	}
-
-
-}
-
 char* Solver::solve(char* map) {
 	
+	this->noExpandedNodes = 0;
 
 	Map gameMap = Map(map);
 	//cout << gameMap.width() << " " << gameMap.height() << endl;
@@ -115,6 +63,7 @@ char* Solver::solve(char* map) {
 	while (q->size() > 0) {
 		State tmp = (q->top()).second;
 		q->pop();
+		this->noExpandedNodes++;
 		//cout << "poped state with cost: " << (q->top()).first << endl;
 		//printState(tmp, gameMap);
 		//cout << tmp.getHistory().size() << endl;
@@ -163,6 +112,7 @@ char* Solver::solve(char* map) {
 	if (win) {
 
 		cout << winningState->getHistory() << endl;
+		cout << "No of expanded nodes:" << noExpandedNodes << endl;
 		char * hej = new char[winningState->getHistory().size()+5];
 		strcpy(hej, winningState->getHistory().c_str());
 		return hej;

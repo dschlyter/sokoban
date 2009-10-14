@@ -1,5 +1,8 @@
 tänkbara optimeringar:
 
+allmänt:
+skicka med const referenser där det går, undviker kopiering av states
+
 A*:
 snabbare heuristik (just nu: boxes*goalpos = n^2)
 bättre heuristik (mindre admissible, söker djupare i trädet)
@@ -10,7 +13,9 @@ states:
 snabbare att hitta lådor i states (accesstid O(n), treemap istället?)
 inte putta lådor till fail-väggar (förberäknade i map)
 spara minne genom att inte lagra full history i varje state
-/ undvika duplicated states (med zobrist hashing?)
-  - undvika rakna ut ny hash for varje state, modda gamla hashen istallet
+ - träd med zobrist keys istället
+DONE undvika duplicated states (med zobrist hashing?)
+ - undvika rakna ut ny hash for varje state, modda gamla hashen istallet
+ - bucket sort för zobrist hashes
 pi-coral finding
 

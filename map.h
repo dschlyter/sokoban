@@ -7,6 +7,7 @@
 #define GOAL 3
 
 #define EMPTY_CHAR '.'
+#define DEADLOCK_CHAR ','
 #define WALL_CHAR '#'
 #define GOAL_CHAR '/'
 #define PLAYER_START_CHAR 'x'
@@ -31,6 +32,7 @@ class Map {
 		vector<Coordinate> goals;
 		// start pos of the player
 		Coordinate playersStart;
+		bool *deadLock;
 		
 	public:
 		Map(const string);
@@ -44,9 +46,11 @@ class Map {
 		size_t width() const;
 		size_t height() const;
 		
+		bool isGoal(const Coordinate) const;		
 		bool isWall(const Coordinate) const;		
+		bool isDeadLock(const Coordinate) const;
 		vector<State> getSuccessorStates(const State) const;
-		
+        void printState(const State & state) const;
 		friend ostream& operator<<(ostream &out, const Map &a );
 };
 

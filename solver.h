@@ -23,7 +23,8 @@ class Solver {
 		U64 zobristHash(State, int, int);
 		U64 * zobrist;
 		set<U64> repeatedStates;
-		
+		int noExpandedNodes;
+
 		void printState(State, Map);
 		int heuristic(State, Map);
 		int manhattanDistance(Coordinate, Coordinate);
