@@ -2,7 +2,6 @@
 #include "state.h"
 #include <cstring>
 
-using std::tolower;
 
 Map::Map(const string map){
 	// Calc size of map
@@ -28,7 +27,7 @@ Map::Map(const string map){
 	size_t row = 0;
 	size_t col = 0;
 	for(size_t i = 0; i < map.length(); i++){
-		switch( tolower(map[i]) ){
+		switch( map[i] ){
 			case EMPTY_CHAR:
 				static_map[row*map_width+col] = EMPTY;
 				break;
@@ -42,7 +41,11 @@ Map::Map(const string map){
 				break;
 			case PLAYER_START_CHAR:
 				static_map[row*map_width+col] = EMPTY;
-                playersStart = Coordinate(col,row);
+                		playersStart = Coordinate(col,row);
+				break;
+			case BOX_ON_GOAL_CHAR:
+				static_map[row*map_width+col] = GOAL;
+				boxesStart.push_back(Coordinate(col, row));
 				break;
 			case BOX_CHAR:
 				static_map[row*map_width+col] = EMPTY;
@@ -107,6 +110,8 @@ Map::Map(const string map){
 					//std::cout<<"found empty "<<x<<"x"<<y<<std::endl;
 					if(static_map[y*map_width+x+1] != WALL) right_wall = false;
 					if(static_map[y*map_width+x-1] != WALL) left_wall = false;
+					//if(!deadLock[y*map_width+x+1]) right_wall = false;
+					//if(!deadLock[y*map_width+x-1]) left_wall = false;
 
 					if(!left_wall && !right_wall){
 						first_dead = 0;
@@ -148,6 +153,8 @@ Map::Map(const string map){
                                         //std::cout<<"found empty "<<x<<"x"<<y<<std::endl;
                                         if(static_map[(y+1)*map_width+x] != WALL) down_wall = false;
                                         if(static_map[(y-1)*map_width+x] != WALL) up_wall = false;
+					//if(!deadLock[(y+1)*map_width+x]) down_wall = false;
+					//if(!deadLock[(y-1)*map_width+x]) up_wall = false;
 
                                         if(!up_wall && !down_wall){
                                                 first_dead = 0;
@@ -266,6 +273,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
                     //7 0 1
                     //6 B 2
                     //5 4 3
+					
                     static int offsetX[] = { 0,  1, 1, 1, 0, -1, -1, -1};
                     static int offsetY[] = {-1, -1, 0, 1, 1,  1,  0, -1};
                     bool occupied[8];
@@ -288,7 +296,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
                     if(occupied[6] && occupied[7] && occupied[0]){
                         continue;
                     }
-                    //}
+				
                 }
 
 

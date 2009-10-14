@@ -68,19 +68,12 @@ char* Solver::solve(char* map) {
 		//printState(tmp, gameMap);
 		//cout << tmp.getHistory().size() << endl;
 		
-		vector<Coordinate> goals = gameMap.getGoals();
 		vector<Coordinate> boxes = tmp.getBoxes();
 		
 		win = true;
-		for (size_t i = 0; i < goals.size(); i++) {
-			bool success = false;
-			for (size_t j = 0; j < boxes.size(); j++) {
-				if (goals[i] == boxes[j]) {
-					success = true;
-					break;
-				}
-			}
-			if (!success) {
+		for (size_t i = 0; i < boxes.size(); i++) {
+			if (!gameMap.isGoal(boxes[i]))
+			{
 				win = false;
 				break;
 			}
@@ -122,11 +115,14 @@ char* Solver::solve(char* map) {
 }
 
 int Solver::heuristic(State state, Map map) {
-	vector<Coordinate> goals = map.getGoals();
 	vector<Coordinate> boxes = state.getBoxes();
+	vector<Coordinate> goals = map.getGoals();
+	Coordinate player = state.getPlayerPosition();
 
-	int sum = state.getCost();
+	int sum = 0;//state.getCost();
 
+	int cc = 0;
+        int box_min = 100000000;
 	for (size_t i = 0; i < boxes.size(); i++) {
 		int min = 10000000;
 		for (size_t j = 0; j < goals.size(); j++) {
@@ -136,8 +132,16 @@ int Solver::heuristic(State state, Map map) {
 			}
 		}
 		sum += min;
+		if(map.isDeadLock(boxes[i])){
+			sum-=boxes.size();
+		}
+		if(box_min > min) cc = i;
 	}
-	return sum;	
+	
+	sum -= manhattanDistance(player, boxes[cc]);
+
+	return sum;
+
 }
 
 int Solver::manhattanDistance(Coordinate first, Coordinate second) {

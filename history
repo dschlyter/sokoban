@@ -5,9 +5,27 @@ No map solveable
 
 implementing zobrist hashing
 Map 1: 0.005s, 734 expanded nodes
-Map 2: 34.4s, 3.96 milion expanded nodes
+Map 2: 34.4s, 3.96 million expanded nodes
 
 deadlock detection: checking corners
 Map 1: 0.003s, 294 expanded nodes
-Map 2: 14.8s, 1.89 milion expanded nodes
+Map 2: 14.8s, 1.89 million expanded nodes
+
+deadlock detection: checking walls
+Map 1: 0.003s, 294 expanded nodes
+Map 2: 11.6s, 1.52 million
+Map 3: 13.5, 1.80 M
+Map 4: 64.9, 7.89 M
+
+deadlock detection: checking 2x2 cubes
+Map 1: 0.002s, 275
+Map 2: 6.71, 920k
+Map 3: 10.7, 1.51M
+Map 4: 54.7, 6.52M
+
+changing heuristic by removing cost and having nearest goal heuristic:
+Map 1: 0.002, 99
+Map 2: 0.12, 18251
+3: 3.81, 645k
+4: 28.8, 4.2M
 

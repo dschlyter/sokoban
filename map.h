@@ -9,6 +9,7 @@
 #define EMPTY_CHAR '.'
 #define DEADLOCK_CHAR ','
 #define WALL_CHAR '#'
+#define BOX_ON_GOAL_CHAR 'O'
 #define GOAL_CHAR '/'
 #define PLAYER_START_CHAR 'x'
 #define BOX_CHAR 'o'

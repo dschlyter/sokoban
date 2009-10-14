@@ -5,9 +5,9 @@ skicka med const referenser där det går, undviker kopiering av states
 
 A*:
 snabbare heuristik (just nu: boxes*goalpos = n^2)
-bättre heuristik (mindre admissible, söker djupare i trädet)
-mer optad container än vector i A* (opassande för prioritetskö?)
-effektivare goal-test (just nu n^2 i värsta fall, men oftast snabbare)
+DONE bättre heuristik (mindre admissible, söker djupare i trädet)
+buckets till queue
+DONE effektivare goal-test (just nu n^2 i värsta fall, men oftast snabbare)
 
 states:
 snabbare att hitta lådor i states (accesstid O(n), treemap istället?)
