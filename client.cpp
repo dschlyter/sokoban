@@ -8,7 +8,7 @@
 #include <iostream>
 #include "solver.h"
 
-#define PORT 5555
+#define PORT 5555 
 #define BUFFERSIZE 1024
 
 void error(char *msg)
@@ -53,12 +53,12 @@ int main(int argc, char *argv[])
     if (n < 0) 
          error("ERROR reading from socket");
 	printf("%s\n",buffer);
+	Solver solver = Solver();
+	char *MYSOL = solver.solve(buffer);	
 
-	solve(buffer);	
 
 
-
-	char *MYSOL="U R R D U U L D L L U L L D R R R R L D D R U R U D L L U R";
+	//char *MYSOL="U R R D U U L D L L U L L D R R R R L D D R U R U D L L U R";
     
 	
 	n = write(sockfd,MYSOL,strlen(MYSOL));

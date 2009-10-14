@@ -112,27 +112,21 @@ vector<State> Map::getSuccessorStates(const State state) const {
 	   x = (-1 + i) * ((i + 1) % 2);
         y = (-2 + i) * (i % 2);
 
-		cout << "WHAT" << endl;
         Coordinate newPos = Coordinate(playerPos.first+x,playerPos.second+y);
-        static string move[] = { "L", "D", "R", "U" };
+        static string move[] = { "L", "U", "R", "D" };
         
-		cout << "Before.." << endl;
 		if(newPos.first < 0 || newPos.second < 0 || newPos.first >= map_width || newPos.second >= map_height || isWall(newPos)) {
             //Impossible to move into a wall or outside the map, next
             continue;
         }
-		cout << "After!" << endl;
        
-		cout << "And I am still alive..." << endl;
 		if(state.isBox(newPos)){
             //Try box push
             Coordinate newBoxPos = Coordinate(newPos.first+x,newPos.second+y);
-		cout << "Second Map-alive!" << endl;
             if (!(newBoxPos.first < 0 || newBoxPos.second < 0 || newBoxPos.first >= map_width || newBoxPos.second >= map_height) && (!isWall(newBoxPos) && !state.isBox(newBoxPos))){
-		cout << "Third Map-alive!" << endl;
                 //If this move is possible, change location of the box 
                 //TODO could be optimized
-                vector<Coordinate> newBoxes = vector<Coordinate>();
+                vector<Coordinate> newBoxes = vector<Coordinate>(boxes);
                 for(size_t j=0; j<newBoxes.size(); j++){
                     if(newBoxes[j] == newPos){
                         newBoxes[j] = newBoxPos;
@@ -142,11 +136,9 @@ vector<State> Map::getSuccessorStates(const State state) const {
             }
         } else { 
             //Player moves into empty square
-		cout << "And I am still alive..." << endl;
             ret.push_back(State(newPos,boxes, history+move[i]));
         }
 
-		cout << "And I am still alive..." << endl;
     }
    return ret;
     //TODO optimize: check for duplicated states

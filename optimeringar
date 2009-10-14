@@ -10,6 +10,7 @@ states:
 snabbare att hitta lådor i states (accesstid O(n), treemap istället?)
 inte putta lådor till fail-väggar (förberäknade i map)
 spara minne genom att inte lagra full history i varje state
-undvika duplicated states (med zobrist hashing?)
+/ undvika duplicated states (med zobrist hashing?)
+  - undvika rakna ut ny hash for varje state, modda gamla hashen istallet
 pi-coral finding
 
