@@ -130,7 +130,8 @@ int Solver::heuristic(State state, Map map) {
 	vector<Coordinate> goals = map.getGoals();
 	Coordinate player = state.getPlayerPosition();
 
-	int sum = 0;//state.getCost();
+    //TODO opt, 5 verkar bra på nr 2
+	int sum = state.getCost() / 5;
 
 	int cc = 0;
     int box_min = 100000000;
