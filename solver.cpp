@@ -8,32 +8,10 @@
 #include "balancedtree.h"
 #include "bucketlist.h"
 
-#define U64 unsigned long long int
 
 bool compareStates::operator() (const intStatePair & left, const intStatePair & right) const {
 	return (left.first>right.first);
 };
-
-
-// Generate 64-bit random number (naively)
-U64 Solver::rand64() {
-	return rand() ^ ((U64) rand() << 15) ^ ((U64) rand() << 30) ^ ((U64) rand() << 45) ^ ((U64) rand() << 60);
-}
-
-U64 Solver::zobristHash(State state, int width, int secondStart) {
-	U64 key = 0;
-
-	// Hash in player into key
-	Coordinate pos = state.getPlayerPosition();
-	key ^= this->zobrist[pos.second*width+pos.first];
-
-	// Hash in boxes into key
-	vector<Coordinate> boxes = state.getBoxes();
-	for (int i = 0; i < boxes.size(); i++) {
-		key ^= this->zobrist[secondStart + boxes[i].second*width+boxes[i].first];	
-	}
-	return key;
-}
 
 char* Solver::solve(char* map) {
 	
@@ -42,6 +20,9 @@ char* Solver::solve(char* map) {
 	Map gameMap = Map(map);
 	//cout << gameMap.width() << " " << gameMap.height() << endl;
 	Coordinate normalizedStartPos = gameMap.calcNormalizedPosition();
+
+	int height = gameMap.height()*gameMap.width();
+    State::initZobristHash(gameMap.width(), gameMap.height());
 	State initialState = State(normalizedStartPos, gameMap.getBoxes());
 	
 	TStorage<int, intStatePair> *q = new TStorage<int, intStatePair>();
@@ -50,19 +31,7 @@ char* Solver::solve(char* map) {
 
 	//q->push(heuristic(initialState, gameMap), initialState);
 	q->push(intStatePair(heuristic(initialState, gameMap), initialState));
-
-	int height = gameMap.height()*gameMap.width();
-	int width = 2;
-	int totalSize = height * width;
 	
-	this->zobrist = new U64[totalSize];
-
-	for (int type = 0; type < 2; type++) {
-		for (int coord = 0; coord < height; coord++) {
-			this->zobrist[type*height+coord] = rand64();
-		}
-	}
-
 	bool win = true;
 	State * winningState = 0;
 	while (q->size() > 0) {
@@ -100,10 +69,8 @@ char* Solver::solve(char* map) {
             //gameMap.printState(newStates[i]);
 			
 			State state = newStates[i];
-			U64 hashKey = zobristHash(state, gameMap.width(), gameMap.width()*gameMap.height());
-		
 
-			if (!(this->repeatedStates.insert(hashKey).second)) {
+			if (!(this->repeatedStates.insert(state.getHash()).second)) {
 				// State already visited: skip
 				continue;
 			}
@@ -179,9 +146,9 @@ int Solver::heuristic(State state, Map map) {
 		
 		//good if box is in a deadlock and goal.
         	//TODO expand for goal packing opt
-		/*if(map.isGoal(boxes[i]) && map.isDeadLock(boxes[i])){
+		if(map.isGoal(boxes[i]) && map.isDeadLock(boxes[i])){
 			sum -= boxes.size();
-		}*/
+		}
 	}
 	//Wtf, increasing when far from goal?
 	//sum -= manhattanDistance(player, boxes[cc]);

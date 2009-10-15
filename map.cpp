@@ -410,7 +410,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
                 newBoxes[j] = newBoxPos;
             }
         }
-        ret.push_back(State(normalizedPosition,newBoxes, cost+1));
+        ret.push_back(State(normalizedPosition,newBoxes, cost+1, i));
     }
     //normalisera player state (kan kräva omräkning)
     //TODO uppdatera history (backtrack eller array av strings?)
