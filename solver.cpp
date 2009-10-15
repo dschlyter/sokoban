@@ -141,7 +141,7 @@ int Solver::heuristic(State state, Map map) {
 
     //TODO opt, 5 verkar bra på nr 2
     //eller nu verkar 3 och 2 bra xD
-	int sum = state.getCost() / 2;
+	int sum = state.getCost() / 3;
 
 	int cc = 0;
     int box_min = 100000000;
