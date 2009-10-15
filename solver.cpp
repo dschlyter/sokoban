@@ -84,8 +84,13 @@ char* Solver::solve(char* map) {
 			break;
 		}
 
+        cerr << "======================================" << endl << endl;
+        cerr << "Expanding:" << endl << endl;
+        gameMap.printState(tmp);
+        cerr << "Generated:" << endl << endl;
 		vector<State> newStates = gameMap.getSuccessorStates(tmp);
 		for (size_t i = 0; i < newStates.size(); i++) {
+            gameMap.printState(newStates[i]);
 			
 			State state = newStates[i];
 			U64 hashKey = zobristHash(state, gameMap.width(), gameMap.width()*gameMap.height());
@@ -105,14 +110,19 @@ char* Solver::solve(char* map) {
 
 	if (win) {
 
-		cout << winningState->getHistory() << endl;
+		//cout << winningState->getHistory() << endl;
+        cout << "Solution found!" << endl;
 		cout << "No of expanded nodes:" << noExpandedNodes << endl;
-		char * hej = new char[winningState->getHistory().size()+5];
-		strcpy(hej, winningState->getHistory().c_str());
-		return hej;
-	}
+        //TODO lägg till history-grejer
+		//char * hej = new char[winningState->getHistory().size()+5];
+		//strcpy(hej, winningState->getHistory().c_str());
+		return "D";
+	} else {
+        cout << "Solution not found!" << endl;
+		cout << "No of expanded nodes:" << noExpandedNodes << endl;
+	    return "FAIL";
+    }
 
-	return "FAIL";
 }
 
 int Solver::heuristic(State state, Map map) {

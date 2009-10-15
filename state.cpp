@@ -1,11 +1,10 @@
 #include "state.h"
 
 State::State(const Coordinate playerPosition, const vector<Coordinate> boxPositions) : playerPos(playerPosition), boxes(boxPositions){
-    history = string("");
-    //pushes = 0;
+    pushes = 0;
 }
 
-State::State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const string stateHistory) : playerPos(playerPosition), boxes(boxPositions), history(stateHistory){
+State::State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const int pushCount) : playerPos(playerPosition), boxes(boxPositions), pushes(pushCount){
     
 }
 
@@ -17,13 +16,8 @@ vector<Coordinate> State::getBoxes() const{
 	return boxes;
 }
 
-string State::getHistory() const{
-    return history;
-}
-
 int State::getCost() const{
-    return history.size();
-    //return pushes;
+    return pushes;
 }
 
 bool State::isBox(Coordinate pos) const{

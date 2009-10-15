@@ -51,7 +51,7 @@ class Map {
 		bool isWall(const Coordinate) const;		
 		bool isDeadLock(const Coordinate) const;
         Coordinate calcNormalizedPosition() const;
-        Coordinate calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, const bool * visitMap) const;
+        Coordinate calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, bool * visitMap) const;
 		vector<State> getSuccessorStates(const State) const;
         void printState(const State & state) const;
 		friend ostream& operator<<(ostream &out, const Map &a );

@@ -239,17 +239,25 @@ bool Map::isDeadLock(const Coordinate pos) const{
 }
 
 //For calculating the normalized player position in the initial state
-Coordinate Map::calcNormalizedPosition(const Coordinate startPos) const{
-    bool boxMap[] = new bool[map_height*map_width];
-    bool visitMap[] = new int[map_height*map_width];
-    int parent[] = new int[map_height*map_width]; 
+Coordinate Map::calcNormalizedPosition() const{
+    bool boxMap[map_height*map_width];
+    bool visitMap[map_height*map_width];
     memset(boxMap, 0, sizeof(bool)*map_width*map_height);
     memset(visitMap, 0, sizeof(bool)*map_width*map_height);
+
+    for(int i=0; i<boxesStart.size(); i++){
+        Coordinate box = boxesStart[i];
+        boxMap[box.second * map_width + box.first] = true;
+    }
+
+    return calcNormalizedPosition(playersStart, boxMap, visitMap);
+
+}
 
 
 //Calcs the normalized player position using bfs
 //Uses sent in maps for computational efficiency
-Coordinate Map::calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, const bool * visitMap) const{
+Coordinate Map::calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, bool * visitMap) const{
     static int moveX[] = { -1, 0, 1, 0 };
     static int moveY[] = { 0, -1, 0, 1 };
 
@@ -260,7 +268,7 @@ Coordinate Map::calcNormalizedPosition(const Coordinate startPos, const bool * b
     queue<Coordinate> q; 
     q.push(startPos);
     while(!q.empty()){
-        Coordinate tmp = q.top();
+        Coordinate tmp = q.front();
         q.pop();
         if(tmp.second < minY || (tmp.second == minY && tmp.first < minX)){
             minX = tmp.first;
@@ -270,9 +278,8 @@ Coordinate Map::calcNormalizedPosition(const Coordinate startPos, const bool * b
         for(int i=0; i<4; i++){
             Coordinate moveCoord = Coordinate(tmp.first + moveX[i], tmp.second + moveY[i]);
             int moveArrayIndex = moveCoord.second * map_width + moveCoord.first;
-            if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL && !boxMap(moveArrayIndex)){
+            if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL && !boxMap[moveArrayIndex]){
                 visitMap[moveArrayIndex] = 1;
-                parent[moveArrayIndex] = i;
                 q.push(Coordinate(moveCoord.first,moveCoord.second));
             }
         }
@@ -285,13 +292,11 @@ vector<State> Map::getSuccessorStates(const State state) const {
     vector<State> ret;
     Coordinate playerPos = state.getPlayerPosition();
     vector<Coordinate> boxes = state.getBoxes();
-    string history = state.getHistory();
-    //int cost = state.getCost();
+    int cost = state.getCost();
 
     //placera ut boxar, och initiera visited för sökning
-    bool boxMap[] = new bool[map_height*map_width];
-    bool visitMap[] = new bool[map_height*map_width];
-    int parent[] = new int[map_height*map_width]; 
+    bool boxMap[map_height*map_width];
+    bool visitMap[map_height*map_width];
     memset(boxMap, 0, sizeof(bool)*map_width*map_height);
     memset(visitMap, 0, sizeof(bool)*map_width*map_height);
     for(int i=0; i<boxes.size(); i++){
@@ -311,7 +316,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
     int minX = map_width+1;
     int minY = map_height+1;
 
-    typedef boxPush = pair<Coordinate, int>;
+    typedef pair<Coordinate, int> boxPush;
     vector<boxPush> pushes;
 
     //kör bfs för att hitta tillåtna moves
@@ -319,7 +324,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
     q.push(playerPos);
     visitMap[playerPos.second * map_width + playerPos.first] = true;
     while(!q.empty()){
-        Coordinate tmp = q.top();
+        Coordinate tmp = q.front();
         q.pop();
         if(tmp.second < minY || (tmp.second == minY && tmp.first < minX)){
             minX = tmp.first;
@@ -331,56 +336,61 @@ vector<State> Map::getSuccessorStates(const State state) const {
             if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL){
                 if(boxMap[moveArrayIndex]){
                     int boxArrayIndex = moveArrayIndex + moveY[i]*map_width + moveX[i];
-                    //Abort if square is occupied or is precalculated deadlock
-                    if(static_map[boxArrayIndex] == WALL || boxMap[boxArrayIndex] || deadLock[boxArrayIndex]){
+                    //Check if box can be pushed
+                    if(static_map[boxArrayIndex] == WALL || boxMap[boxArrayIndex]){
                         continue;
                     }
-                    
-                    //check if box is Pushed into a 2x2 cube of blocks or walls (always unsolveable)
-                    //examine squares around in clockwise order
-                    //7 0 1
-                    //6 B 2
-                    //5 4 3
-					
-                    bool occupied[8];
-                    for(int j=0; j<8; j++){
-                        occupied[j] = false;
-                        int aroundArrayIndex = boxArrayIndex + aroundY[j] * map_width + aroundX[j];
-                        if(aroundArrayIndex != moveArrayIndex && static_map[aroundArrayIndex] != GOAL && (static_map[aroundArrayIndex] == WALL || boxMap[aroundArrayIndex])){
-                            occupied[j] = true; 
+                    //If destination square isnt a goal, preform simple deadlock checking
+                    if(static_map[boxArrayIndex] != GOAL){
+                        //Abort if square is precalculated deadlock
+                        if(deadLock[boxArrayIndex]){
+                            continue;
+                        }
+
+                        //check if box is Pushed into a 2x2 cube of blocks or walls (always unsolveable)
+                        //examine squares around in clockwise order
+                        //7 0 1
+                        //6 B 2
+                        //5 4 3
+
+                        bool occupied[8];
+                        for(int j=0; j<8; j++){
+                            occupied[j] = false;
+                            int aroundArrayIndex = boxArrayIndex + aroundY[j] * map_width + aroundX[j];
+                            if(aroundArrayIndex != moveArrayIndex && (static_map[aroundArrayIndex] == WALL || boxMap[aroundArrayIndex])){
+                                occupied[j] = true; 
+                            }
+                        }
+                        if(occupied[0] && occupied[1] && occupied[2]){
+                            continue;
+                        }
+                        if(occupied[2] && occupied[3] && occupied[4]){
+                            continue;
+                        }
+                        if(occupied[4] && occupied[5] && occupied[6]){
+                            continue;
+                        } 
+                        if(occupied[6] && occupied[7] && occupied[0]){
+                            continue;
                         }
                     }
-                    if(occupied[0] && occupied[1] && occupied[2]){
-                        continue;
-                    }
-                    if(occupied[2] && occupied[3] && occupied[4]){
-                        continue;
-                    }
-                    if(occupied[4] && occupied[5] && occupied[6]){
-                        continue;
-                    } 
-                    if(occupied[6] && occupied[7] && occupied[0]){
-                        continue;
-                    }
-
                     pushes.push_back(boxPush(Coordinate(moveCoord.first,moveCoord.second), i));
                 } else {
                     visitMap[moveArrayIndex] = 1;
-                    parent[moveArrayIndex] = i;
                     q.push(Coordinate(moveCoord.first,moveCoord.second));
                 }
             }
         }
     }
 
-    bool visitMap2[] = new bool[map_width * map_height]; 
+    bool visitMap2[map_width * map_height]; 
     for(int i=0; i<pushes.size(); i++){
         boxPush tmp = pushes[i];
         Coordinate newPlayerPos = tmp.first;
         int moveType = tmp.second;
-        Coordinate newBoxPos = Coordinate(newPlayerPos.first + moveX[moveType], newPlayerPos.second + moveY[moveType])
+        Coordinate newBoxPos = Coordinate(newPlayerPos.first + moveX[moveType], newPlayerPos.second + moveY[moveType]);
         int playerArrayIndex = newPlayerPos.second * map_width + newPlayerPos.first;
-        int playerArrayIndex = newBoxPos.second * map_width + newBoxPos.first;
+        int boxArrayIndex = newBoxPos.second * map_width + newBoxPos.first;
         //changeBoxMap
         boxMap[boxArrayIndex] = true;
         boxMap[playerArrayIndex] = false;
@@ -400,7 +410,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
                 newBoxes[j] = newBoxPos;
             }
         }
-        ret = ret.push_back(State(normalizedPosition,newBoxes, ""));
+        ret.push_back(State(normalizedPosition,newBoxes, cost+1));
     }
     //normalisera player state (kan kräva omräkning)
     //TODO uppdatera history (backtrack eller array av strings?)
@@ -410,17 +420,17 @@ vector<State> Map::getSuccessorStates(const State state) const {
     
 //Function used for debugging
 void Map::printState(const State & state) const {
-	cout << "Depth: " << state.getHistory().size() << endl;
+	cout << "Depth: " << state.getCost() << endl;
 	for (int y = 0; y < height(); y++) {
 		for (int x = 0; x < width(); x++) {
 			Coordinate tmp;
 			tmp.first = x;
 			tmp.second = y;
 			if (isWall(tmp)) {
-				cout << "#";
+				cerr << "#";
 			}
 			else if (state.getPlayerPosition() == tmp) {
-				cout << "x";
+				cerr << "x";
 			}
 			else {
 				vector<Coordinate> boxes = state.getBoxes();
@@ -429,30 +439,30 @@ void Map::printState(const State & state) const {
 					if (boxes[i].first == x && boxes[i].second == y) {
 						done = true;
                         if(isGoal(tmp)){
-                            cout << "¤";
+                            cerr << "¤";
                         } else {
-                            cout << "o";
+                            cerr << "o";
                         }
 						break;
 					}
 				}
 			    if (!done) {
                     if (isGoal(tmp)){
-                        cout << "/";
+                        cerr << "/";
                     } else {
-			            cout << ".";
+			            cerr << ".";
                     }
 				}
 			}
 		}
-		cout << endl;
+		cerr << endl;
 	}
-	cout << endl;
-	cout << endl;
-	for (int i = 0; i < 10000; i++) {
-		for (int j = 0; j < 25000; j++) {
+	cerr << endl;
+	cerr << endl;
+	for (int i = 0; i < 1000; i++) {
+		for (int j = 0; j < 1000; j++) {
 			if (j % 12 == 132) {
-				cout << endl;
+				cerr << endl;
 			}
 		}	
 	}
