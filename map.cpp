@@ -439,7 +439,7 @@ void Map::printState(const State & state) const {
 					if (boxes[i].first == x && boxes[i].second == y) {
 						done = true;
                         if(isGoal(tmp)){
-                            cerr << "¤";
+                            cerr << "O";
                         } else {
                             cerr << "o";
                         }

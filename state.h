@@ -14,6 +14,8 @@ class State {
 	    string history;	
         int pushes;
 	public:
+		State(){}
+	
 		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions);
 		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const int pushCount);
 		Coordinate getPlayerPosition() const;

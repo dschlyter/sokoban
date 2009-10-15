@@ -5,6 +5,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <set>
+#include "balancedtree.h"
+#include "bucketlist.h"
 
 #define U64 unsigned long long int
 
@@ -42,10 +44,12 @@ char* Solver::solve(char* map) {
     Coordinate normalizedStartPos = gameMap.calcNormalizedPosition();
 	State initialState = State(normalizedStartPos, gameMap.getBoxes());
 	
-	priority_queue<intStatePair, vector<intStatePair>, compareStates> *q = new priority_queue<intStatePair, vector<intStatePair>, compareStates>();
+	TStorage<int, intStatePair> *q = new TStorage<int, intStatePair>();
+	//BucketList *q = new BucketList(-50, 200, 200);
+	//priority_queue<intStatePair, vector<intStatePair>, compareStates> *q = new priority_queue<intStatePair, vector<intStatePair>, compareStates>();
 
+	//q->push(heuristic(initialState, gameMap), initialState);
 	q->push(intStatePair(heuristic(initialState, gameMap), initialState));
-
 
 	int height = gameMap.height()*gameMap.width();
 	int width = 2;
@@ -62,8 +66,10 @@ char* Solver::solve(char* map) {
 	bool win = true;
 	State * winningState = 0;
 	while (q->size() > 0) {
+		//State &tmp = q->pop();
 		State tmp = (q->top()).second;
 		q->pop();
+		
 		this->noExpandedNodes++;
 		//cout << "poped state with cost: " << (q->top()).first << endl;
 		//printState(tmp, gameMap);
@@ -80,17 +86,18 @@ char* Solver::solve(char* map) {
 			}
 		}
 		if (win) {
+            gameMap.printState(tmp);
 			winningState = new State(tmp);
 			break;
 		}
 
-        cerr << "======================================" << endl << endl;
+        /*cerr << "======================================" << endl << endl;
         cerr << "Expanding:" << endl << endl;
         gameMap.printState(tmp);
-        cerr << "Generated:" << endl << endl;
+        cerr << "Generated:" << endl << endl;*/
 		vector<State> newStates = gameMap.getSuccessorStates(tmp);
 		for (size_t i = 0; i < newStates.size(); i++) {
-            gameMap.printState(newStates[i]);
+            //gameMap.printState(newStates[i]);
 			
 			State state = newStates[i];
 			U64 hashKey = zobristHash(state, gameMap.width(), gameMap.width()*gameMap.height());
@@ -105,6 +112,7 @@ char* Solver::solve(char* map) {
 			//cout << "Pushed new state.. with cost: " << score << endl;
 			intStatePair tmp = intStatePair(score, state);
 			q->push(tmp);
+			//q->push(score, state);
 		}
 	}
 
@@ -122,7 +130,8 @@ char* Solver::solve(char* map) {
 		cout << "No of expanded nodes:" << noExpandedNodes << endl;
 	    return "FAIL";
     }
-
+	
+	delete q;
 }
 
 int Solver::heuristic(State state, Map map) {
@@ -131,7 +140,8 @@ int Solver::heuristic(State state, Map map) {
 	Coordinate player = state.getPlayerPosition();
 
     //TODO opt, 5 verkar bra på nr 2
-	int sum = state.getCost() / 5;
+    //eller nu verkar 3 och 2 bra xD
+	int sum = state.getCost() / 2;
 
 	int cc = 0;
     int box_min = 100000000;
