@@ -98,11 +98,14 @@ template <class K, class D> class TStorage{
 			return GetCount();
 		}
 		inline D& top(){
-			TStorageNode<K,D> *p = GetLast(); 
+			TStorageNode<K,D> *p = GetFirst(); 
 			return p->GetData();
 		}
 		inline void pop(){
-			Delete(Last);
+			//std::cout<<GetCount()<<std::endl;
+			//std::cout<<First->GetData().first<<" -- "<<Last->GetData().first<<std::endl<<std::endl;
+		
+			Delete(First);
 		}
 		inline void push(const intStatePair p){
 			Insert(p.first, p);
