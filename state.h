@@ -12,6 +12,7 @@ class State {
 		Coordinate playerPos;
 		vector<Coordinate> boxes;
 	    string history;	
+        //int pushes;
 	public:
 		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions);
 		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const string stateHistory);

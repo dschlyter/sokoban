@@ -1,6 +1,7 @@
 #include "map.h"
 #include "state.h"
 #include <cstring>
+#include <queue>
 
 
 Map::Map(const string map){
@@ -41,7 +42,7 @@ Map::Map(const string map){
 				break;
 			case PLAYER_START_CHAR:
 				static_map[row*map_width+col] = EMPTY;
-                		playersStart = Coordinate(col,row);
+                playersStart = Coordinate(col,row);
 				break;
 			case BOX_ON_GOAL_CHAR:
 				static_map[row*map_width+col] = GOAL;
@@ -237,50 +238,115 @@ bool Map::isDeadLock(const Coordinate pos) const{
 	return deadLock[pos.second*map_width+pos.first];
 }
 
-vector<State> Map::getSuccessorStates(const State state) const {
-   vector<State> ret;
-   ret.reserve(4);
-   Coordinate playerPos = state.getPlayerPosition();
-   vector<Coordinate> boxes = state.getBoxes();
-   string history = state.getHistory();
+//For calculating the normalized player position in the initial state
+Coordinate Map::calcNormalizedPosition(const Coordinate startPos) const{
+    bool boxMap[] = new bool[map_height*map_width];
+    bool visitMap[] = new int[map_height*map_width];
+    int parent[] = new int[map_height*map_width]; 
+    memset(boxMap, 0, sizeof(bool)*map_width*map_height);
+    memset(visitMap, 0, sizeof(bool)*map_width*map_height);
 
-   static string move[] = { "L", "U", "R", "D" };
-   static int moveX[] = { -1, 0, 1, 0 };
-   static int moveY[] = { 0, -1, 0, 1 };
-   for(size_t i=0;i<4;i++){
-        Coordinate newPos = Coordinate(playerPos.first+moveX[i],playerPos.second+moveY[i]);
-        
-		if(newPos.first < 0 || newPos.second < 0 || newPos.first >= map_width || newPos.second >= map_height || isWall(newPos)) {
-            //Impossible to move into a wall or outside the map, next
-            continue;
+
+//Calcs the normalized player position using bfs
+//Uses sent in maps for computational efficiency
+Coordinate Map::calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, const bool * visitMap) const{
+    static int moveX[] = { -1, 0, 1, 0 };
+    static int moveY[] = { 0, -1, 0, 1 };
+
+    int minX = map_width+1;
+    int minY = map_height+1;
+
+    //kör bfs för att hitta tillåtna moves
+    queue<Coordinate> q; 
+    q.push(startPos);
+    while(!q.empty()){
+        Coordinate tmp = q.top();
+        q.pop();
+        if(tmp.second < minY || (tmp.second == minY && tmp.first < minX)){
+            minX = tmp.first;
+            minY = tmp.second;
         }
-       
-		if(state.isBox(newPos)){
-            //Try box push
-            Coordinate newBoxPos = Coordinate(newPos.first+moveX[i],newPos.second+moveY[i]);
-            if (!(newBoxPos.first < 0 || newBoxPos.second < 0 || newBoxPos.first >= map_width || newBoxPos.second >= map_height) && (!isWall(newBoxPos) && !state.isBox(newBoxPos))){
-                //If not pushed into a goal location, check for deadlocks
-                if(!isGoal(newBoxPos)){
-                    //Check if square is a precalculated deadlock
-                    if(isDeadLock(newBoxPos)){
+
+        for(int i=0; i<4; i++){
+            Coordinate moveCoord = Coordinate(tmp.first + moveX[i], tmp.second + moveY[i]);
+            int moveArrayIndex = moveCoord.second * map_width + moveCoord.first;
+            if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL && !boxMap(moveArrayIndex)){
+                visitMap[moveArrayIndex] = 1;
+                parent[moveArrayIndex] = i;
+                q.push(Coordinate(moveCoord.first,moveCoord.second));
+            }
+        }
+    }
+
+    return Coordinate(minX,minY);
+}
+
+vector<State> Map::getSuccessorStates(const State state) const {
+    vector<State> ret;
+    Coordinate playerPos = state.getPlayerPosition();
+    vector<Coordinate> boxes = state.getBoxes();
+    string history = state.getHistory();
+    //int cost = state.getCost();
+
+    //placera ut boxar, och initiera visited för sökning
+    bool boxMap[] = new bool[map_height*map_width];
+    bool visitMap[] = new bool[map_height*map_width];
+    int parent[] = new int[map_height*map_width]; 
+    memset(boxMap, 0, sizeof(bool)*map_width*map_height);
+    memset(visitMap, 0, sizeof(bool)*map_width*map_height);
+    for(int i=0; i<boxes.size(); i++){
+        boxMap[boxes[i].second*map_width+boxes[i].first] = true;
+    }
+
+    //TODO LATER: Kolla PI-corrals
+    //TODO make parent matrix and backtrack
+    
+    static string move[] = { "L", "U", "R", "D" };
+    static int moveX[] = { -1, 0, 1, 0 };
+    static int moveY[] = { 0, -1, 0, 1 };
+    
+    static int aroundX[] = { 0,  1, 1, 1, 0, -1, -1, -1};
+    static int aroundY[] = {-1, -1, 0, 1, 1,  1,  0, -1};
+
+    int minX = map_width+1;
+    int minY = map_height+1;
+
+    typedef boxPush = pair<Coordinate, int>;
+    vector<boxPush> pushes;
+
+    //kör bfs för att hitta tillåtna moves
+    queue<Coordinate> q; 
+    q.push(playerPos);
+    visitMap[playerPos.second * map_width + playerPos.first] = true;
+    while(!q.empty()){
+        Coordinate tmp = q.top();
+        q.pop();
+        if(tmp.second < minY || (tmp.second == minY && tmp.first < minX)){
+            minX = tmp.first;
+            minY = tmp.second;
+        }
+        for(int i=0; i<4; i++){
+            Coordinate moveCoord = Coordinate(tmp.first + moveX[i], tmp.second + moveY[i]);
+            int moveArrayIndex = moveCoord.second * map_width + moveCoord.first;
+            if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL){
+                if(boxMap[moveArrayIndex]){
+                    int boxArrayIndex = moveArrayIndex + moveY[i]*map_width + moveX[i];
+                    //Abort if square is occupied or is precalculated deadlock
+                    if(static_map[boxArrayIndex] == WALL || boxMap[boxArrayIndex] || deadLock[boxArrayIndex]){
                         continue;
                     }
-
-                    //TODO this function is buggy
-                    //if(false){
-                    //check if box is Pushed into a 2x2 cube of blocks or walls (unsolveable)
+                    
+                    //check if box is Pushed into a 2x2 cube of blocks or walls (always unsolveable)
                     //examine squares around in clockwise order
                     //7 0 1
                     //6 B 2
                     //5 4 3
 					
-                    static int offsetX[] = { 0,  1, 1, 1, 0, -1, -1, -1};
-                    static int offsetY[] = {-1, -1, 0, 1, 1,  1,  0, -1};
                     bool occupied[8];
                     for(int j=0; j<8; j++){
                         occupied[j] = false;
-                        Coordinate checkPos = Coordinate(newBoxPos.first+offsetX[j], newBoxPos.second+offsetY[j]);
-                        if(!isGoal(checkPos) && checkPos != newPos && (isWall(checkPos) || state.isBox(checkPos))){
+                        int aroundArrayIndex = boxArrayIndex + aroundY[j] * map_width + aroundX[j];
+                        if(aroundArrayIndex != moveArrayIndex && static_map[aroundArrayIndex] != GOAL && (static_map[aroundArrayIndex] == WALL || boxMap[aroundArrayIndex])){
                             occupied[j] = true; 
                         }
                     }
@@ -296,29 +362,50 @@ vector<State> Map::getSuccessorStates(const State state) const {
                     if(occupied[6] && occupied[7] && occupied[0]){
                         continue;
                     }
-				
-                }
 
-
-                //If this move is possible, change location of the box 
-                //TODO could be optimized
-                
-                vector<Coordinate> newBoxes = vector<Coordinate>(boxes);
-                for(size_t j=0; j<newBoxes.size(); j++){
-                    if(newBoxes[j] == newPos){
-                        newBoxes[j] = newBoxPos;
-                    }
+                    pushes.push_back(boxPush(Coordinate(moveCoord.first,moveCoord.second), i));
+                } else {
+                    visitMap[moveArrayIndex] = 1;
+                    parent[moveArrayIndex] = i;
+                    q.push(Coordinate(moveCoord.first,moveCoord.second));
                 }
-                ret.push_back(State(newPos,newBoxes, history+move[i])); 
             }
-        } else { 
-            //Player moves into empty square
-            ret.push_back(State(newPos,boxes, history+move[i]));
         }
-
     }
-   return ret;
-    //TODO optimize: check for duplicated states
+
+    bool visitMap2[] = new bool[map_width * map_height]; 
+    for(int i=0; i<pushes.size(); i++){
+        boxPush tmp = pushes[i];
+        Coordinate newPlayerPos = tmp.first;
+        int moveType = tmp.second;
+        Coordinate newBoxPos = Coordinate(newPlayerPos.first + moveX[moveType], newPlayerPos.second + moveY[moveType])
+        int playerArrayIndex = newPlayerPos.second * map_width + newPlayerPos.first;
+        int playerArrayIndex = newBoxPos.second * map_width + newBoxPos.first;
+        //changeBoxMap
+        boxMap[boxArrayIndex] = true;
+        boxMap[playerArrayIndex] = false;
+        //TODO opt if(!visitMap[(y + moveY[moveType]) * map_width + (x + moveX[moveType])] || 
+        //memcpy + call
+        //else
+        memset(visitMap2, 0, sizeof(bool)*map_width*map_height);
+        Coordinate normalizedPosition = calcNormalizedPosition(newPlayerPos, boxMap, visitMap2);
+        //reset boxMap
+        boxMap[boxArrayIndex] = false;
+        boxMap[playerArrayIndex] = true;
+        //change box location and push
+        //TODO optimize O(n) loop
+        vector<Coordinate> newBoxes = vector<Coordinate>(boxes);
+        for(size_t j=0; j<newBoxes.size(); j++){
+            if(newBoxes[j] == newPlayerPos){
+                newBoxes[j] = newBoxPos;
+            }
+        }
+        ret = ret.push_back(State(normalizedPosition,newBoxes, ""));
+    }
+    //normalisera player state (kan kräva omräkning)
+    //TODO uppdatera history (backtrack eller array av strings?)
+    //TODO LATER: (beräkna hash, kolla duplicate state här istället)
+    return ret;
 }
     
 //Function used for debugging

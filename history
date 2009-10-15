@@ -23,7 +23,7 @@ Map 2: 6.71, 920k
 Map 3: 10.7, 1.51M
 Map 4: 54.7, 6.52M
 
-changing heuristic by removing cost and having nearest goal heuristic:
+changing heuristic by removing cost and only having nearest goal heuristic:
 Map 1: 0.002, 99
 Map 2: 0.12, 18251
 3: 3.81, 645k

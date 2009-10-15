@@ -11,6 +11,9 @@
 #define PORT 5555 
 #define BUFFERSIZE 1024
 
+pthread_mutex_t qMutex;
+pthread_mutex_t sMutex;
+
 void error(char *msg)
 {
     perror(msg);

@@ -1,21 +1,22 @@
 tänkbara optimeringar:
 
-allmänt:
-skicka med const referenser där det går, undviker kopiering av states
+nu i typ prioriterad ordning:
 
-A*:
-snabbare heuristik (just nu: boxes*goalpos = n^2)
-DONE bättre heuristik (mindre admissible, söker djupare i trädet)
-buckets till queue
-DONE effektivare goal-test (just nu n^2 i värsta fall, men oftast snabbare)
-
-states:
-snabbare att hitta lådor i states (accesstid O(n), treemap istället?)
-inte putta lådor till fail-väggar (förberäknade i map)
-spara minne genom att inte lagra full history i varje state
+goal room packing (ska vara väldigt bra på sokobanX)
+koda om med bfs och A* enbart på pushes (typ lite jobbigt)
+spara minne och körtid genom att inte lagra full history i varje state
  - träd med zobrist keys istället
-DONE undvika duplicated states (med zobrist hashing?)
- - undvika rakna ut ny hash for varje state, modda gamla hashen istallet
- - bucket sort för zobrist hashes
+snabbare att hitta lådor i states (accesstid O(n), treemap istället?)
+buckets till queue och zobrist hashes
+skicka med const referenser där det går, undviker kopiering av states
+normalized player position, för att minimera antalet states
 pi-coral finding
+undvika rakna ut ny hash for varje state, modda gamla hashen istallet
+snabbare heuristik (just nu: boxes*goalpos = n^2)
+A*:
 
+klart:
+bättre heuristik (mindre admissible, söker djupare i trädet)
+effektivare goal-test (just nu n^2 i värsta fall, men oftast snabbare)
+inte putta lådor till fail-väggar (förberäknade i map)
+undvika duplicated states (med zobrist hashing?)

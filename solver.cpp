@@ -39,7 +39,8 @@ char* Solver::solve(char* map) {
 
 	Map gameMap = Map(map);
 	//cout << gameMap.width() << " " << gameMap.height() << endl;
-	State initialState = State(gameMap.getStart(), gameMap.getBoxes());
+    Coordinate normalizedStartPos = gameMap.calcNormalizedPosition();
+	State initialState = State(normalizedStartPos, gameMap.getBoxes());
 	
 	priority_queue<intStatePair, vector<intStatePair>, compareStates> *q = new priority_queue<intStatePair, vector<intStatePair>, compareStates>();
 
@@ -122,8 +123,10 @@ int Solver::heuristic(State state, Map map) {
 	int sum = 0;//state.getCost();
 
 	int cc = 0;
-        int box_min = 100000000;
+    int box_min = 100000000;
 	for (size_t i = 0; i < boxes.size(); i++) {
+	
+		//good is a box is near a goal
 		int min = 10000000;
 		for (size_t j = 0; j < goals.size(); j++) {
 			int tmp = manhattanDistance(boxes[i], goals[j]);
@@ -132,13 +135,34 @@ int Solver::heuristic(State state, Map map) {
 			}
 		}
 		sum += min;
-		if(map.isDeadLock(boxes[i])){
-			sum-=boxes.size();
-		}
-		if(box_min > min) cc = i;
+		//if(min < box_min) cc = i;
+		
+        /*
+         * New search algorithm does not store player state
+		//punicshes the player to go away from a blocking box.
+		if(!map.isGoal(boxes[i])){
+			if(	map.isWall(Coordinate(boxes[i].first+1,boxes[i].second)) && 
+				map.isWall(Coordinate(boxes[i].first-1,boxes[i].second)) && 
+				!map.isWall(Coordinate(boxes[i].first,boxes[i].second+1)) && 
+				!map.isWall(Coordinate(boxes[i].first,boxes[i].second-1))){
+				sum += manhattanDistance(player, boxes[i])*2;
+			}else
+			if(	map.isWall(Coordinate(boxes[i].first,boxes[i].second+1)) && 
+				map.isWall(Coordinate(boxes[i].first,boxes[i].second-1)) && 
+				!map.isWall(Coordinate(boxes[i].first+1,boxes[i].second)) && 
+				!map.isWall(Coordinate(boxes[i].first-1,boxes[i].second))){
+				sum += manhattanDistance(player, boxes[i])*2;
+			}
+		}*/
+		
+		//good if box is in a deadlock and goal.
+        //TODO expand for goal packing opt
+		/*if(map.isGoal(boxes[i]) && map.isDeadLock(boxes[i])){
+			sum -= boxes.size();
+		}*/
 	}
-	
-	sum -= manhattanDistance(player, boxes[cc]);
+    //Wtf, increasing when far from goal?
+	//sum -= manhattanDistance(player, boxes[cc]);
 
 	return sum;
 

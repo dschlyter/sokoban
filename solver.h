@@ -4,12 +4,14 @@
 #include "state.h"
 #include "map.h"
 
+
 #define U64 unsigned long long int
 
 using namespace std;
 
 
 typedef pair<int, State> intStatePair;
+
 
 
 class compareStates {
@@ -20,17 +22,17 @@ class compareStates {
 class Solver {
 	private:
 		U64 rand64();
-		U64 zobristHash(State, int, int);
 		U64 * zobrist;
-		set<U64> repeatedStates;
-		int noExpandedNodes;
 
 		void printState(State, Map);
-		int heuristic(State, Map);
 		int manhattanDistance(Coordinate, Coordinate);
 
 	public:
 		char* solve(char*);
+		U64 zobristHash(State, int, int);
+		int noExpandedNodes;
+		int heuristic(State, Map);
+		set<U64> repeatedStates;
 
 };
 
