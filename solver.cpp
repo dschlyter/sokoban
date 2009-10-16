@@ -7,6 +7,7 @@
 #include <set>
 #include "balancedtree.h"
 #include "bucketlist.h"
+#include <cmath>
 
 
 bool compareStates::operator() (const intStatePair & left, const intStatePair & right) const {
@@ -57,29 +58,34 @@ int Solver::heuristic(State state, Map * map) {
 	int sum = 0; //state.getCost();
 
     int goalSum[goals.size()];
+    int goalMax = 0;
+    int goalMaxi = 0;
 	for (size_t i = 0; i < boxes.size(); i++) {
-	
 		//good is a box is near a goal
 		int min = 10000000;
 		for (size_t j = 0; j < goals.size(); j++) {
 			int tmp = manhattanDistance(boxes[i], goals[j]);
+            goalSum[j]+=tmp;
+            if (goalSum[j] > goalMax){
+                goalMax = goalSum[j];
+                goalMaxi = j;
+            }
 			if (tmp < min) {
 				min = tmp;
 			}
 		}
 		sum += min;
 
-        //distance from "optimal" goal
-
-        //TODO punish if box is far away from goal
-
-
 		//good if box is in a deadlock and goal.
-        	//TODO expand for goal packing opt
+        //TODO expand for goal packing opt
 		if(map->isGoal(boxes[i]) && map->isDeadLock(boxes[i])){
 			sum -= boxes.size();
 		}
 	}
+
+	for (size_t i = 0; i<boxes.size(); i++) {
+        sum += manhattanDistance(boxes[i], goals[goalMaxi]);
+    }
 
 	return sum;
 }
