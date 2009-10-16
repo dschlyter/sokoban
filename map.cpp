@@ -173,6 +173,7 @@ Map::Map(const string map){
         }
 
 
+    std::cout << "Precalculated deadlock positions marked with " << DEADLOCK_CHAR << endl << endl;
 	std::cout<<*this<<std::endl;
 }
 
@@ -590,7 +591,7 @@ string Map::backtrack(const State * winningState, map<U64, parentState> * parent
     
 //Function used for debugging
 void Map::printState(const State & state) const {
-	cout << "Depth: " << state.getCost() << endl;
+	cout << "Pushes: " << state.getCost() << endl << endl;
 	for (int y = 0; y < height(); y++) {
 		for (int x = 0; x < width(); x++) {
 			Coordinate tmp;

@@ -7,6 +7,7 @@
 #include <cstring>
 #include <iostream>
 #include "solver.h"
+#include "workerthread.h"
 
 #define PORT 5555 
 #define BUFFERSIZE 1024
@@ -23,6 +24,8 @@ void error(char *msg)
 int main(int argc, char *argv[])
 {
 	char *ADDRESS ="cvap103.nada.kth.se";
+	
+	//char *ADDRESS ="localhost";
     int sockfd, n;
     struct sockaddr_in serv_addr;
     struct hostent *server;
@@ -55,15 +58,51 @@ int main(int argc, char *argv[])
     n = read(sockfd,buffer,BUFFERSIZE-1);
     if (n < 0) 
          error("ERROR reading from socket");
+    cout << "Recieved map from server: " << endl;
 	printf("%s\n",buffer);
-	Solver solver = Solver();
-	char *MYSOL = solver.solve(buffer);	
+
+	int threads = 1;
+	int chunksize = 300;
+	if (argc > 2)
+		threads = atoi(argv[2]);
+	if (argc > 3) 
+		chunksize = atoi(argv[3]);
+
+
+	Solver * solver = new Solver(chunksize);
+	solver->init(buffer);
+
+	cout << "Running with " << threads << " threads," << endl;
+	cout << "and chunksize: " << chunksize << endl << endl;
+
+
+	ThreadPtr * threadArray = new ThreadPtr[threads];
+
+	for (int i = 0; i < threads; i++) {
+		threadArray[i] = ThreadPtr(new WorkerThread(solver, i));
+		threadArray[i]->start();
+		//cout << "Started thread: " << i << endl << flush;
+	}
+	
+	for (int i = 0; i < threads; i++) {
+		//cout << "Waiting for thread " << i << "..." << endl << flush;
+		threadArray[i]->wait();
+		//cout << "Thread " << i << " finished." << endl << flush;
+	}
+
+	char *MYSOL = solver->solution;
+	delete[] threadArray;
+	delete solver;
+	//cout << "String is: \"" << solver->solution << "\"" << endl << flush;
+
+	//char *MYSOL = solver->solution;	
 
 
 
 	//char *MYSOL="U R R D U U L D L L U L L D R R R R L D D R U R U D L L U R";
-    
+    //char *MYSOL="FAIL";
 	
+    cout << endl << "Answer from server: ";
 	n = write(sockfd,MYSOL,strlen(MYSOL));
     if (n < 0) 
          error("ERROR writing to socket");

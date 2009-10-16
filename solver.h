@@ -1,8 +1,10 @@
 #ifndef SOLVER
 #define SOLVER
 #include <map>
+#include <queue>
 #include "state.h"
 #include "map.h"
+#include "balancedtree.h"
 
 using namespace std;
 
@@ -18,14 +20,29 @@ class Solver {
 		void printState(State, Map);
 		int manhattanDistance(Coordinate, Coordinate);
 
+		int height;
+		int width;
+		int totalSize;
+
 	public:
-		char* solve(char*);
+		Solver(int);
+		void init(char*);
 		int noExpandedNodes;
-		int heuristic(State, Map);
+		int heuristic(State, Map *);
 		map<U64, parentState> parentStates;
 
+		Map * gameMap;
+		char * solution;
+		bool isDone;
+		int chunksize;
+		
+		//priority_queue<intStatePair, vector<intStatePair>, compareStates> * queue;
+		TStorage<int, intStatePair> * queue;
+		pthread_mutex_t queueMutex;
+		pthread_mutex_t setMutex;
+		pthread_mutex_t winMutex;
+		pthread_mutex_t countMutex;
 };
-
 
 #endif
 

@@ -20,6 +20,10 @@
 #include "state.h"
 #include "solver.h"
 
+
+
+typedef pair<int, State> intStatePair;
+
 //---------------------------------------------------------------------------
 template <class K, class D> class TStorage;
 template <class K, class D> class TStorageNode;

@@ -7,7 +7,7 @@
 #define GOAL 3
 
 #define EMPTY_CHAR '.'
-#define DEADLOCK_CHAR ','
+#define DEADLOCK_CHAR '!'
 #define WALL_CHAR '#'
 #define BOX_ON_GOAL_CHAR 'O'
 #define GOAL_CHAR '/'
