@@ -410,11 +410,100 @@ vector<State> Map::getSuccessorStates(const State state) const {
                 newBoxes[j] = newBoxPos;
             }
         }
-        ret.push_back(State(normalizedPosition,newBoxes, cost+1, i));
+        ret.push_back(State(normalizedPosition,newBoxes, cost+1,newPlayerPos,tmp.second));
     }
     //normalisera player state (kan kräva omräkning)
     //TODO uppdatera history (backtrack eller array av strings?)
     //TODO LATER: (beräkna hash, kolla duplicate state här istället)
+    return ret;
+}
+
+string Map::backtrack(const State * winningState, map<U64, parentState> * parentStates) const{
+    //Thus function builds a string of moves
+    string ret = "";
+
+    //Initialize box state from winning state
+    vector<Coordinate> boxes = winningState->getBoxes();
+    bool boxMap[map_height*map_width];
+    memset(boxMap, 0, sizeof(bool)*map_width*map_height);
+    for(int i=0; i<boxes.size(); i++){
+        boxMap[boxes[i].second*map_width+boxes[i].first] = true;
+    }
+
+    //Desclare other maps (initialized later)
+    bool visitMap[map_height*map_width];
+    string historyMap[map_height*map_width];
+
+    //Declare and init a few variables used in the backtrack
+    Coordinate currentPos = winningState->getMoveLoc();
+    U64 hash = (*parentStates)[winningState->getHash()].first;
+    Coordinate goal;
+    int moveType = winningState->getMoveType();
+
+    //Some static variables used for the search
+    static string move[] = { "L", "U", "R", "D" };
+    static int moveX[] = { -1, 0, 1, 0 };
+    static int moveY[] = { 0, -1, 0, 1 };
+
+    while(true){
+        //undo the push preformed to get to the state
+        boxMap[currentPos.second*map_width+currentPos.first] = true;
+        boxMap[(currentPos.second + moveY[moveType]) * map_width + (currentPos.first + moveX[moveType])] = false;
+        //also undo the move made to this state
+        currentPos = Coordinate(currentPos.first - moveX[moveType], currentPos.second - moveY[moveType]);
+        //and update string accordingly
+        ret = move[moveType] + ret;
+
+        //Find the previous state using hash
+        //parentState = pair: (U64,(Coordinate,int))
+        parentState p = (*parentStates)[hash];
+        //and uppdate variables to reflect this
+        //hash of parent
+        hash = p.first;
+        //end location of previous push
+        goal = p.second.first;
+        //type of move
+        moveType = p.second.second;
+
+        //reset visited map and history
+        memset(visitMap, 0, sizeof(bool)*map_width*map_height);
+        visitMap[currentPos.second * map_width + currentPos.first] = true;
+        for(int i=0; i<map_height*map_width; i++){
+            historyMap[i] = "";
+        }
+
+        //Prepare and preform bfs
+        queue<Coordinate> q;
+        q.push(currentPos);
+        while(!q.empty()){
+            //Pop a square
+            Coordinate square = q.front();
+            q.pop();
+            int arrayIndex = square.second * map_width + square.first;
+            if(square == goal){
+                //if finished update string and break
+                currentPos = goal;
+                ret = historyMap[arrayIndex] + ret;
+                break;
+            }
+            for(int i=0; i<4; i++){
+                Coordinate moveCoord = Coordinate(square.first - moveX[i], square.second - moveY[i]);
+                int moveArrayIndex = moveCoord.second * map_width + moveCoord.first;
+                //Check for valid moves
+                if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL && !boxMap[moveArrayIndex]){
+                    //Set visited, update history and push
+                    visitMap[moveArrayIndex] = true;
+                    historyMap[moveArrayIndex] = move[i] + historyMap[arrayIndex];
+                    q.push(Coordinate(moveCoord.first,moveCoord.second));
+                }
+            }
+        }
+
+        //If moveType is -1 we have reached the beginning, abort
+        if(moveType == -1){
+            break;
+        }
+    }
     return ret;
 }
     
@@ -427,10 +516,10 @@ void Map::printState(const State & state) const {
 			tmp.first = x;
 			tmp.second = y;
 			if (isWall(tmp)) {
-				cerr << "#";
+				cout << "#";
 			}
 			else if (state.getPlayerPosition() == tmp) {
-				cerr << "x";
+				cout << "x";
 			}
 			else {
 				vector<Coordinate> boxes = state.getBoxes();
@@ -439,30 +528,29 @@ void Map::printState(const State & state) const {
 					if (boxes[i].first == x && boxes[i].second == y) {
 						done = true;
                         if(isGoal(tmp)){
-                            cerr << "O";
+                            cout << "O";
                         } else {
-                            cerr << "o";
+                            cout << "o";
                         }
 						break;
 					}
 				}
 			    if (!done) {
                     if (isGoal(tmp)){
-                        cerr << "/";
+                        cout << "/";
                     } else {
-			            cerr << ".";
+			            cout << ".";
                     }
 				}
 			}
 		}
-		cerr << endl;
+		cout << endl;
 	}
-	cerr << endl;
-	cerr << endl;
+	cout << endl;
 	for (int i = 0; i < 1000; i++) {
 		for (int j = 0; j < 1000; j++) {
 			if (j % 12 == 132) {
-				cerr << endl;
+				cout << endl;
 			}
 		}	
 	}

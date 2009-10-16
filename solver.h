@@ -1,6 +1,6 @@
 #ifndef SOLVER
 #define SOLVER
-#include <set>
+#include <map>
 #include "state.h"
 #include "map.h"
 
@@ -22,7 +22,7 @@ class Solver {
 		char* solve(char*);
 		int noExpandedNodes;
 		int heuristic(State, Map);
-		set<U64> repeatedStates;
+		map<U64, parentState> parentStates;
 
 };
 

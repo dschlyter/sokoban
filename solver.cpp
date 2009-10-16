@@ -23,7 +23,8 @@ char* Solver::solve(char* map) {
 
 	int height = gameMap.height()*gameMap.width();
     State::initZobristHash(gameMap.width(), gameMap.height());
-	State initialState = State(normalizedStartPos, gameMap.getBoxes());
+	State initialState = State(normalizedStartPos, gameMap.getBoxes(), gameMap.getStart());
+	parentStates.insert(psMap(initialState.getHash(),parentState(0,stateMove(initialState.getMoveLoc(),initialState.getMoveType()))));
 	
 	TStorage<int, intStatePair> *q = new TStorage<int, intStatePair>();
 	//BucketList *q = new BucketList(-50, 200, 200);
@@ -55,7 +56,6 @@ char* Solver::solve(char* map) {
 			}
 		}
 		if (win) {
-            		gameMap.printState(tmp);
 			winningState = new State(tmp);
 			break;
 		}
@@ -70,7 +70,7 @@ char* Solver::solve(char* map) {
 			
 			State state = newStates[i];
 
-			if (!(this->repeatedStates.insert(state.getHash()).second)) {
+			if (!(this->parentStates.insert(psMap(state.getHash(),parentState(tmp.getHash(),stateMove(state.getMoveLoc(),state.getMoveType())))).second)) {
 				// State already visited: skip
 				continue;
 			}
@@ -84,14 +84,15 @@ char* Solver::solve(char* map) {
 	}
 
 	if (win) {
-
 		//cout << winningState->getHistory() << endl;
-        cout << "Solution found!" << endl;
-		cout << "No of expanded nodes:" << noExpandedNodes << endl;
-        //TODO lägg till history-grejer
-		//char * hej = new char[winningState->getHistory().size()+5];
-		//strcpy(hej, winningState->getHistory().c_str());
-		return "D";
+        cout << "Solution found!" << endl << endl;
+        gameMap.printState(*winningState);
+		cout << "No of expanded nodes: " << noExpandedNodes << endl;
+        string history = gameMap.backtrack(winningState, &parentStates);
+        cout << "Solution: " << history << endl;
+		char * ret = new char[history.size()+5];
+		strcpy(ret, history.c_str());
+		return ret;
 	} else {
         cout << "Solution not found!" << endl;
 		cout << "No of expanded nodes:" << noExpandedNodes << endl;

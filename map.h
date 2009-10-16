@@ -19,7 +19,12 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <map>
 using namespace std;
+
+typedef pair<Coordinate, int> stateMove;
+typedef pair<U64,stateMove> parentState;
+typedef pair<U64,parentState> psMap;
 
 class Map {
 	private:
@@ -53,6 +58,7 @@ class Map {
         Coordinate calcNormalizedPosition() const;
         Coordinate calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, bool * visitMap) const;
 		vector<State> getSuccessorStates(const State) const;
+        string backtrack(const State * winningState, map<U64, parentState> * parentStates) const;
         void printState(const State & state) const;
 		friend ostream& operator<<(ostream &out, const Map &a );
 };

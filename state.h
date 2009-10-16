@@ -16,6 +16,7 @@ class State {
 		Coordinate playerPos;
 		vector<Coordinate> boxes;
         int pushes;
+        Coordinate moveLoc;
         int moveType;
         U64 hash;
         
@@ -30,12 +31,13 @@ class State {
 
         static void initZobristHash(int width, int height);
 	
-		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions);
-		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const int pushCount, const int move);
+		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const Coordinate loc);
+		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const int pushCount, const Coordinate loc, const int move);
 		Coordinate getPlayerPosition() const;
 		vector<Coordinate> getBoxes() const;
         int getCost() const;
         int getMoveType() const;
+        Coordinate getMoveLoc() const;
         U64 getHash() const;
         bool isBox(const Coordinate) const;
 };

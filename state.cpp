@@ -4,13 +4,15 @@ int State::map_width = 0;
 int State::secondStart = 0;
 U64 * State::zobrist = 0;
 
-State::State(const Coordinate playerPosition, const vector<Coordinate> boxPositions) : playerPos(playerPosition), boxes(boxPositions){
+//Normalized player pos, vector of boxes and start position
+State::State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const Coordinate loc) : playerPos(playerPosition), boxes(boxPositions), moveLoc(loc){
     pushes = 0;
     moveType = -1;
     zobristHash();
 }
 
-State::State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const int pushCount, const int move) : playerPos(playerPosition), boxes(boxPositions), pushes(pushCount), moveType(move){
+//Normalized player pos, vector of boxes, pushCount, location after boxpush and type of move
+State::State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const int pushCount, const Coordinate loc, const int move) : playerPos(playerPosition), boxes(boxPositions), pushes(pushCount), moveLoc(loc), moveType(move){
     zobristHash();
 }
 
@@ -24,6 +26,10 @@ vector<Coordinate> State::getBoxes() const{
 
 int State::getCost() const{
     return pushes;
+}
+
+Coordinate State::getMoveLoc() const {
+    return moveLoc;
 }
 
 int State::getMoveType() const {
