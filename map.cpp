@@ -303,9 +303,6 @@ vector<State> Map::getSuccessorStates(const State state) const {
         boxMap[boxes[i].second*map_width+boxes[i].first] = true;
     }
 
-    //TODO LATER: Kolla PI-corrals
-    //TODO make parent matrix and backtrack
-    
     static string move[] = { "L", "U", "R", "D" };
     static int moveX[] = { -1, 0, 1, 0 };
     static int moveY[] = { 0, -1, 0, 1 };
@@ -383,6 +380,23 @@ vector<State> Map::getSuccessorStates(const State state) const {
         }
     }
 
+    //TODO LATER: Kolla PI-corrals
+    //flag for finding a coral
+    //int array for enumerating corals
+    //bool array for checking validation
+    //pseudocode
+    //forEach boxPush
+        //if pushed into unvisited
+            //if coralAllreadyFound, add to queue, else if coralAllreadyFailed break, else preform coral check
+                //count if at least one box in coral is not on goal
+                //bfs begin at pushed 
+                    //iterate over adjacant empty unvisited and squares with boxes
+                    //if unvisited square, push all adjacant
+                    //if box, check if (Up+Down visited or Left+Right visited, in that case fail)
+    //if picoralFound
+        //prune all other pushes
+
+
     bool visitMap2[map_width * map_height]; 
     for(int i=0; i<pushes.size(); i++){
         boxPush tmp = pushes[i];
@@ -394,11 +408,22 @@ vector<State> Map::getSuccessorStates(const State state) const {
         //changeBoxMap
         boxMap[boxArrayIndex] = true;
         boxMap[playerArrayIndex] = false;
-        //TODO opt if(!visitMap[(y + moveY[moveType]) * map_width + (x + moveX[moveType])] || 
-        //memcpy + call
-        //else
-        memset(visitMap2, 0, sizeof(bool)*map_width*map_height);
-        Coordinate normalizedPosition = calcNormalizedPosition(newPlayerPos, boxMap, visitMap2);
+        Coordinate normalizedPosition;
+        //If newBoxPos is unvisited or if box is has blocked squares to the left and rigth, we can reuse the visitmap
+        int rightArrayIndex = boxArrayIndex + moveY[(moveType+1)%4] * map_width + moveX[(moveType+1)%4];
+        int leftArrayIndex = boxArrayIndex + moveY[(moveType+3)%4] * map_width + moveX[(moveType+3)%4];
+        if(!visitMap[boxArrayIndex] || ((boxMap[leftArrayIndex] || static_map[leftArrayIndex] == WALL) && (boxMap[rightArrayIndex] || static_map[rightArrayIndex] == WALL))){
+            memcpy(visitMap2, visitMap, sizeof(bool)*map_width*map_height);
+            normalizedPosition = calcNormalizedPosition(newPlayerPos, boxMap, visitMap2);
+            //Check if newfound position is better than the old one
+            if(normalizedPosition.second > minY || (normalizedPosition.second == minY && normalizedPosition.first < minX)){
+                normalizedPosition = Coordinate(minX, minY);
+            }
+        } else {
+            //Otherwise it needs to be calculated from scratch
+            memset(visitMap2, 0, sizeof(bool)*map_width*map_height);
+            normalizedPosition = calcNormalizedPosition(newPlayerPos, boxMap, visitMap2);
+        }
         //reset boxMap
         boxMap[boxArrayIndex] = false;
         boxMap[playerArrayIndex] = true;
@@ -412,9 +437,6 @@ vector<State> Map::getSuccessorStates(const State state) const {
         }
         ret.push_back(State(normalizedPosition,newBoxes, cost+1,newPlayerPos,tmp.second));
     }
-    //normalisera player state (kan kräva omräkning)
-    //TODO uppdatera history (backtrack eller array av strings?)
-    //TODO LATER: (beräkna hash, kolla duplicate state här istället)
     return ret;
 }
 
