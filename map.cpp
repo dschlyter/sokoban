@@ -337,69 +337,128 @@ vector<State> Map::getSuccessorStates(const State state) const {
                     if(static_map[boxArrayIndex] == WALL || boxMap[boxArrayIndex]){
                         continue;
                     }
-                    //If destination square isnt a goal, preform simple deadlock checking
-                    if(static_map[boxArrayIndex] != GOAL){
-                        //Abort if square is precalculated deadlock
-                        if(deadLock[boxArrayIndex]){
-                            continue;
-                        }
-
-                        //check if box is Pushed into a 2x2 cube of blocks or walls (always unsolveable)
-                        //examine squares around in clockwise order
-                        //7 0 1
-                        //6 B 2
-                        //5 4 3
-
-                        bool occupied[8];
-                        for(int j=0; j<8; j++){
-                            occupied[j] = false;
-                            int aroundArrayIndex = boxArrayIndex + aroundY[j] * map_width + aroundX[j];
-                            if(aroundArrayIndex != moveArrayIndex && (static_map[aroundArrayIndex] == WALL || boxMap[aroundArrayIndex])){
-                                occupied[j] = true; 
-                            }
-                        }
-                        if(occupied[0] && occupied[1] && occupied[2]){
-                            continue;
-                        }
-                        if(occupied[2] && occupied[3] && occupied[4]){
-                            continue;
-                        }
-                        if(occupied[4] && occupied[5] && occupied[6]){
-                            continue;
-                        } 
-                        if(occupied[6] && occupied[7] && occupied[0]){
-                            continue;
-                        }
-                    }
-                    pushes.push_back(boxPush(Coordinate(moveCoord.first,moveCoord.second), i));
+                    //Add to list of possible pushes
+                    pushes.push_back(boxPush(moveCoord, i));
                 } else {
+                    //If empty square, keep on searching on neighbours by pushing into queue
                     visitMap[moveArrayIndex] = 1;
-                    q.push(Coordinate(moveCoord.first,moveCoord.second));
+                    q.push(moveCoord);
                 }
             }
         }
     }
 
-    //TODO LATER: Kolla PI-corrals
-    //flag for finding a coral
-    //int array for enumerating corals
-    //bool array for checking validation
-    //pseudocode
-    //forEach boxPush
-        //if pushed into unvisited
-            //if coralAllreadyFound, add to queue, else if coralAllreadyFailed break, else preform coral check
-                //count if at least one box in coral is not on goal
-                //bfs begin at pushed 
-                    //iterate over adjacant empty unvisited and squares with boxes
-                    //if unvisited square, push all adjacant
-                    //if box, check if (Up+Down visited or Left+Right visited, in that case fail)
-    //if picoralFound
-        //prune all other pushes
+    //finding PI-corrals
+    //flag for finding a corral
+    bool foundPICorral = false;
+    int corralIdentifier = 1;
+    int corralMap[map_width * map_height];
+    memset(corralMap, 0, sizeof(int)*map_width*map_height);
 
+    //Iterate over all possible pushes
+    for(int i=0; i<pushes.size() && !foundPICorral; i++){
+        Coordinate square = pushes[i].first;
+        int moveType = pushes[i].second;
+        int pushArrayIndex = (square.second + moveY[moveType]) * map_width + (square.first + moveX[moveType]);
+        if(!visitMap[pushArrayIndex] && !corralMap[pushArrayIndex]){
+            //Destination for push is inside an unexplored corral, begin search
+            foundPICorral = true;
+            bool allGoalStates = true;
+            queue<Coordinate> q;
+            q.push(square);
+            while(!q.empty()){
+                Coordinate tmp = q.front();
+                int tmpArrayIndex = tmp.second * map_width + tmp.first;
+                q.pop();
+                Coordinate moveCoord[4];
+                int moveArrayIndex[4];
+                for(int i=0; i<4; i++){
+                    moveCoord[i] = Coordinate(tmp.first + moveX[i], tmp.second + moveY[i]);
+                    moveArrayIndex[i] = moveCoord[i].second * map_width + moveCoord[i].first;
+                }
+                //If a box is found, validate that it can only be pushed into the corral
+                if(boxMap[tmpArrayIndex]){
+                    //We want to verify that at least one box is not a goal
+                    if(static_map[tmpArrayIndex] != GOAL){
+                        allGoalStates = false;
+                    }
+                    //If any box can be visited from right and left or visited from up and down, it can be pushed to another part of the corral
+                    if((visitMap[moveArrayIndex[0]] && visitMap[moveArrayIndex[2]]) || (visitMap[moveArrayIndex[1]] && visitMap[moveArrayIndex[3]])){
+                        //Mark corral as a non-PI-corral, but continue search in order to mark entire corral as visited
+                        foundPICorral = false;
+                    }
+                }
+                for(int i=0; i<4; i++){
+                    //Continue exploring the corral (unvisited nodes or boxes)
+                    if(!visitMap[moveArrayIndex[i]] && !corralMap[moveArrayIndex[i]] && static_map[moveArrayIndex[i]] != WALL){
+                        corralMap[moveArrayIndex[i]] = corralIdentifier;
+                        q.push(moveCoord[i]);
+                    }
+                }
+            }
+            //A PI-corral with all boxes on the goal does not nessessarily require pruning
+            if(allGoalStates){
+                foundPICorral = false;
+            }
+            if(foundPICorral){
+                break;
+            } else {
+                corralIdentifier++;
+            }
+        }
+    }
+
+    //Node pruning
+    vector<boxPush> successorPushes;
+    for(int i=0; i<pushes.size(); i++){
+        Coordinate pos = pushes[i].first;
+        int moveType = pushes[i].second;
+        //If a PI-corral has been found, prune all nodes that are not PI-corrals
+        if(foundPICorral && corralMap[pos.second*map_width + pos.first] != corralIdentifier){
+            continue;
+        }
+        int moveArrayIndex = pos.second * map_width + pos.first;
+        int boxArrayIndex = (pos.second + moveY[moveType]) * map_width + (pos.first + moveX[moveType]);
+        //If destination square isnt a goal, preform some simple deadlock checking
+        if(static_map[boxArrayIndex] != GOAL){
+            //Abort if square is precalculated deadlock
+            if(deadLock[boxArrayIndex]){
+                continue;
+            }
+
+            //check if box is Pushed into a 2x2 cube of blocks or walls (always unsolveable)
+            //examine squares around in clockwise order
+            //7 0 1
+            //6 B 2
+            //5 4 3
+
+            bool occupied[8];
+            for(int j=0; j<8; j++){
+                occupied[j] = false;
+                int aroundArrayIndex = boxArrayIndex + aroundY[j] * map_width + aroundX[j];
+                if(aroundArrayIndex != moveArrayIndex && (static_map[aroundArrayIndex] == WALL || boxMap[aroundArrayIndex])){
+                    occupied[j] = true; 
+                }
+            }
+            if(occupied[0] && occupied[1] && occupied[2]){
+                continue;
+            }
+            if(occupied[2] && occupied[3] && occupied[4]){
+                continue;
+            }
+            if(occupied[4] && occupied[5] && occupied[6]){
+                continue;
+            } 
+            if(occupied[6] && occupied[7] && occupied[0]){
+                continue;
+            }
+        }
+        successorPushes.push_back(pushes[i]);
+    }
 
     bool visitMap2[map_width * map_height]; 
-    for(int i=0; i<pushes.size(); i++){
-        boxPush tmp = pushes[i];
+    for(int i=0; i<successorPushes.size(); i++){
+        boxPush tmp = successorPushes[i];
         Coordinate newPlayerPos = tmp.first;
         int moveType = tmp.second;
         Coordinate newBoxPos = Coordinate(newPlayerPos.first + moveX[moveType], newPlayerPos.second + moveY[moveType]);
@@ -409,7 +468,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
         boxMap[boxArrayIndex] = true;
         boxMap[playerArrayIndex] = false;
         Coordinate normalizedPosition;
-        //If newBoxPos is unvisited or if box is has blocked squares to the left and rigth, we can reuse the visitmap
+        //If newBoxPos is unvisited or if box is has blocked squares to the left and right, we can reuse the visitmap
         int rightArrayIndex = boxArrayIndex + moveY[(moveType+1)%4] * map_width + moveX[(moveType+1)%4];
         int leftArrayIndex = boxArrayIndex + moveY[(moveType+3)%4] * map_width + moveX[(moveType+3)%4];
         if(!visitMap[boxArrayIndex] || ((boxMap[leftArrayIndex] || static_map[leftArrayIndex] == WALL) && (boxMap[rightArrayIndex] || static_map[rightArrayIndex] == WALL))){
