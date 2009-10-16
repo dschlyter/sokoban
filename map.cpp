@@ -283,6 +283,41 @@ Coordinate Map::calcNormalizedPosition(const Coordinate startPos, const bool * b
     return Coordinate(minX,minY);
 }
 
+//Calculates dynamic deadlocks
+bool Map::isBlocked(const int x, const int y, const bool boxMap[], bool visited[]) const{
+    static int moveX[] = { -1, 0, 1, 0 };
+    static int moveY[] = { 0, -1, 0, 1 };
+    visited[y * map_width + x] = true;
+    bool stuck[2];
+    for(int i=0;i<2;i++){
+        stuck[i] = false;
+        int x1 = x + moveX[0+i];
+        int x2 = x + moveX[2+i];
+        int y1 = y + moveY[0+i];
+        int y2 = y + moveY[2+i];
+        int arr1 = y1 * map_width + x1;
+        int arr2 = y2 * map_width + x2;
+        //Blocked by walls or allready checked boxes
+        if(static_map[arr1] == WALL || visited[arr1] || static_map[arr2] == WALL || visited[arr2]){
+            stuck[i] = true;
+            continue;
+        }
+        if(static_map[arr1] != GOAL && deadLock[arr1] && static_map[arr2] != GOAL && deadLock[arr2]){
+            stuck[i] = true;
+            continue;
+        }
+        if((boxMap[arr1] && isBlocked(x1, y1, boxMap, visited)) || (boxMap[arr2] && isBlocked(x2,y2,boxMap, visited))){
+            stuck[i] = true;
+            continue;
+        }
+    }
+    if(stuck[0] && stuck[1]){
+        return true;
+    }
+    return false;
+}
+
+
 vector<State> Map::getSuccessorStates(const State state) const {
     vector<State> ret;
     Coordinate playerPos = state.getPlayerPosition();
@@ -382,6 +417,11 @@ vector<State> Map::getSuccessorStates(const State state) const {
                         //Mark corral as a non-PI-corral, but continue search in order to mark entire corral as visited
                         foundPICorral = false;
                     }
+                }else{
+                    //If there is an empty goal state inside the coral, it also has to be expanded
+                    if(static_map[tmpArrayIndex] == GOAL){
+                        allGoalStates = false;
+                    }
                 }
                 for(int i=0; i<4; i++){
                     //Continue exploring the corral (unvisited nodes or boxes)
@@ -421,7 +461,24 @@ vector<State> Map::getSuccessorStates(const State state) const {
                 continue;
             }
 
-            //check if box is Pushed into a 2x2 cube of blocks or walls (always unsolveable)
+            //changeBoxMap
+            boxMap[boxArrayIndex] = true;
+            boxMap[moveArrayIndex] = false;
+
+            bool boxVisited[map_height*map_width];
+            memset(boxVisited, 0, sizeof(bool)*map_width*map_height);
+            bool blocked = isBlocked(pos.first+moveX[moveType], pos.second+moveY[moveType], boxMap, boxVisited);
+
+            //reset boxMap
+            boxMap[boxArrayIndex] = false;
+            boxMap[moveArrayIndex] = true;
+            
+
+            if(blocked){
+                continue;
+            }
+
+            /*//check if box is Pushed into a 2x2 cube of blocks or walls (always unsolveable)
             //examine squares around in clockwise order
             //7 0 1
             //6 B 2
@@ -446,7 +503,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
             } 
             if(occupied[6] && occupied[7] && occupied[0]){
                 continue;
-            }
+            }*/
         }
         successorPushes.push_back(pushes[i]);
     }

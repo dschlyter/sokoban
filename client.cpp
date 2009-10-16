@@ -9,7 +9,8 @@
 #include "solver.h"
 #include "workerthread.h"
 
-#define PORT 5555 
+//5555 56789
+#define PORT 56789 
 #define BUFFERSIZE 1024
 
 pthread_mutex_t qMutex;
@@ -23,7 +24,8 @@ void error(char *msg)
 
 int main(int argc, char *argv[])
 {
-	char *ADDRESS ="cvap103.nada.kth.se";
+	//char *ADDRESS ="cvap103.nada.kth.se";
+	char *ADDRESS = "seven.math.kth.se";
 	
 	//char *ADDRESS ="localhost";
     int sockfd, n;
