@@ -61,32 +61,26 @@ Map::Map(const string map){
 	}
 
 	// Deadlock detection
-	deadLock = new bool[map_height*map_width];
 	for(size_t y=0; y<map_height-1 ;++y){
 		for(size_t x=0; x<map_width-1 ;++x){
 			int walls = 0;
-			Coordinate empty;
+			Coordinate empty = Coordinate(0,0);
 			// x .
 			// . .
-			if(static_map[y*map_width+x] == WALL) ++walls;
-			else if(static_map[y*map_width+x] == EMPTY) empty = Coordinate(x,y);
+			if(static_map[y*map_width+x] == WALL && static_map[(y+1)*map_width+x+1] == WALL){
+				if(static_map[y*map_width+x+1] == EMPTY) deadLock[y*map_width+x+1] = true;
+				if(static_map[(y+1)*map_width+x]== EMPTY) deadLock[(y+1)*map_width+x] = true;
+			}
 			// . x
 			// . .
-			if(static_map[y*map_width+x+1] == WALL) ++walls;
-			else if(static_map[y*map_width+x+1] == EMPTY) empty = Coordinate(x+1,y);
-			// . .
-			// x .
-			if(static_map[(y+1)*map_width+x] == WALL) ++walls;
-			else if(static_map[(y+1)*map_width+x] == EMPTY) empty = Coordinate(x,y+1);
-			// . .
-			// . x
-			if(static_map[(y+1)*map_width+x+1] == WALL) ++walls;
-			else if(static_map[(y+1)*map_width+x+1] == EMPTY) empty = Coordinate(x+1,y+1);
-			
-			if(walls == 3) deadLock[empty.second*map_width+empty.first] = true;
+			else if(static_map[y*map_width+x+1] == WALL && static_map[(y+1)*map_width+x] == WALL){
+				if(static_map[(y+1)*map_width+x+1] == EMPTY) deadLock[(y+1)*map_width+x+1] = true;
+				if(static_map[y*map_width+x] == EMPTY) deadLock[y*map_width+x] = true;
+			}
 		}
-	}
-
+	} 
+	
+	
 	// advanced collumn deadlock detection!!!!!!!1111one
 	for(size_t x=1; x<map_width-1 ;++x){
 		size_t first_dead = 0;
@@ -97,7 +91,7 @@ Map::Map(const string map){
 			       first_dead = y;
 			       //std::cout<<"first_dead: "<<x<<"x"<<y<<std::endl;
 			}
-			else{
+			else if(first_dead!=0){
 				if(deadLock[y*map_width+x]){
 					//std::cout<<"found deadLock "<<x<<"x"<<y<<std::endl;
 					for(size_t i=first_dead; i<y ;i++){
@@ -130,47 +124,47 @@ Map::Map(const string map){
 	}
 
 
-        // advanced row deadlock detection!!!!!!!1111one
-        for(size_t y=1; y<map_height-1 ;++y){
-                size_t first_dead = 0;
-                bool up_wall = true;
-                bool down_wall = true;
-                for(size_t x=1; x<map_width-1 ;++x){
-                        if(first_dead==0 && deadLock[y*map_width+x]){
-                               first_dead = x;
-                               //std::cout<<"first_dead: "<<x<<"x"<<y<<std::endl;
-                        }
-                        else{
-                                if(deadLock[y*map_width+x]){
-                                        //std::cout<<"found deadLock "<<x<<"x"<<y<<std::endl;
-                                        for(size_t i=first_dead; i<x ;i++){
-                                                deadLock[y*map_width+i] = true;
-                                        }
-                                        first_dead = x;
-                                        up_wall = true;
-                                        down_wall = true;
-                                }
-                                else if(static_map[y*map_width+x] == EMPTY){
-                                        //std::cout<<"found empty "<<x<<"x"<<y<<std::endl;
-                                        if(static_map[(y+1)*map_width+x] != WALL) down_wall = false;
-                                        if(static_map[(y-1)*map_width+x] != WALL) up_wall = false;
+	// advanced row deadlock detection!!!!!!!1111one
+	for(size_t y=1; y<map_height-1 ;++y){
+		size_t first_dead = 0;
+		bool up_wall = true;
+		bool down_wall = true;
+		for(size_t x=1; x<map_width-1 ;++x){
+			if(first_dead==0 && deadLock[y*map_width+x]){
+				first_dead = x;
+				//std::cout<<"first_dead: "<<x<<"x"<<y<<std::endl;
+			}
+			else if(first_dead!=0){
+				if(deadLock[y*map_width+x]){
+					//std::cout<<"found deadLock "<<x<<"x"<<y<<std::endl;
+					for(size_t i=first_dead; i<x ;i++){
+						deadLock[y*map_width+i] = true;
+					}
+					first_dead = x;
+					up_wall = true;
+					down_wall = true;
+				}
+				else if(static_map[y*map_width+x] == EMPTY){
+					//std::cout<<"found empty "<<x<<"x"<<y<<std::endl;
+					if(static_map[(y+1)*map_width+x] != WALL) down_wall = false;
+					if(static_map[(y-1)*map_width+x] != WALL) up_wall = false;
 					//if(!deadLock[(y+1)*map_width+x]) down_wall = false;
 					//if(!deadLock[(y-1)*map_width+x]) up_wall = false;
 
-                                        if(!up_wall && !down_wall){
-                                                first_dead = 0;
-                                                up_wall = true;
-                                                down_wall =  true;
-                                        }
-                                }
-                                else{
-                                        first_dead = 0;
-                                        up_wall = true;
-                                        down_wall = true;
-                                }
-                        }
-                }
-        }
+					if(!up_wall && !down_wall){
+						first_dead = 0;
+						up_wall = true;
+						down_wall =  true;
+					}
+				}
+				else{
+					first_dead = 0;
+					up_wall = true;
+					down_wall = true;
+				}
+			}
+		}
+	}
 
 
     std::cout << "Precalculated deadlock positions marked with " << DEADLOCK_CHAR << endl << endl;

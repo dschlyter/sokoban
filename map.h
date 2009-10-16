@@ -39,7 +39,8 @@ class Map {
 		// start pos of the player
 		Coordinate playersStart;
 		bool *deadLock;
-		
+
+        bool isBlocked(const int x, const int y, const bool boxMap[], bool visited[]) const;
 	public:
 		Map(const string);
         Map(const Map &);

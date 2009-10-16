@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     cout << "Recieved map from server: " << endl;
 	printf("%s\n",buffer);
 
-	int threads = 1;
+	int threads = 4;
 	int chunksize = 300;
 	if (argc > 2)
 		threads = atoi(argv[2]);
