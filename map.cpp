@@ -14,6 +14,8 @@ Map::Map(const string map){
 
 	static_map = new char[map_height*map_width];
 	deadLock = new bool[map_height*map_width];
+	goalDistance = new int[map_height*map_width];
+
 	/*for (size_t i = 0; i < map_height; ++i) {
 		static_map[i] = new char[map_width];
 	}*/
@@ -58,6 +60,24 @@ Map::Map(const string map){
 				break;
 		}
 		++col;
+	}
+	
+	// Range calculation
+	
+	for (size_t i = 0; i < map_height; i++) {
+		for (size_t j = 0; j < map_width; j++) {
+			int min = 10000000;
+			for (size_t b = 0; b < goals.size(); b++) {
+				Coordinate t;
+				t.first = j;
+				t.second = i;
+				int tmp = manhattanDistance(t, goals[b]);
+				if (tmp < min) {
+					min = tmp;
+				}
+			}
+			goalDistance[i*map_width+j] = min;
+		}
 	}
 
 	// Deadlock detection
@@ -174,6 +194,7 @@ Map::Map(const string map){
 Map::~Map(){
 	delete [] static_map;
 	delete [] deadLock;
+	delete [] goalDistance; 
 }
 Map::Map(const Map & other){
 	map_width = other.map_width;
@@ -186,7 +207,10 @@ Map::Map(const Map & other){
     memcpy(static_map, other.static_map, map_height*map_width*sizeof(char));
 
 	deadLock = new bool[map_height*map_width];
-	memcpy(deadLock, other.deadLock, map_height*map_width*sizeof(char));
+	memcpy(deadLock, other.deadLock, map_height*map_width*sizeof(bool));
+
+	goalDistance = new int[map_height*map_width];
+	memcpy(goalDistance, other.goalDistance, map_height*map_width*sizeof(int));
 }
 Map & Map::operator=(const Map & other){
 	map_width = other.map_width;
@@ -197,12 +221,16 @@ Map & Map::operator=(const Map & other){
 
     delete[] static_map;
 	static_map = new char[map_height*map_width];
-    memcpy(static_map, other.static_map, map_height*map_width*sizeof(bool));
+    memcpy(static_map, other.static_map, map_height*map_width*sizeof(char));
 	
 	delete[] deadLock;
 	deadLock = new bool[map_height*map_width];
 	memcpy(deadLock, other.deadLock, map_height*map_width*sizeof(bool));
     
+	delete[] goalDistance;
+	goalDistance = new int[map_height*map_width];
+	memcpy(goalDistance, other.goalDistance, map_height*map_width*sizeof(int));
+
 	return *this;
 }
 
@@ -530,26 +558,6 @@ string Map::backtrack(const State * winningState, map<U64, parentState> * parent
         //and update string accordingly
         ret = move[moveType] + ret;
 
-        for(int i=0; i<map_height; i++){
-            for(int j=0; j<map_width; j++){
-                int arrI = i * map_width + j;
-                if(boxMap[arrI]){
-                    if(static_map[arrI] == GOAL)
-                        cout << "O";
-                    else
-                        cout << "o";
-                } else if(static_map[arrI] == WALL) {
-                    cout << "#";
-                } else if(static_map[arrI] == GOAL) {
-                    cout << "/";
-                } else {
-                    cout << ".";
-                }
-            }
-            cout << endl;
-        }
-        cout << endl << endl;
-
         //Find the previous state using hash
         //parentState = pair: (U64,(Coordinate,int))
         parentState p = (*parentStates)[hash];
@@ -650,6 +658,15 @@ void Map::printState(const State & state) const {
 			}
 		}	
 	}
+}
+
+int Map::manhattanDistance(const Coordinate first, const Coordinate second) const {
+	return abs(first.first - second.first) + abs(first.second - second.second);	
+}
+
+int Map::distanceGoal(const Coordinate box) const {
+	//return 3;
+	return goalDistance[box.second*map_width+box.first];
 }
 
 ostream& operator<<(ostream &out, const Map &a ){

@@ -1,0 +1,18 @@
+ISS - Incredible/Inferior Sokoban Solver readme
+
+This program uses the POSIX thread library (pthread) which is required.
+
+Build the program by running make
+
+To remove *.o files run make clean
+
+When the program is built, a binary named 'iss' will be located in the bin/ directory.
+
+Usage:
+./iss boardnum [numberofthreads] [chunksize]
+
+boardnum is the number of the board to be solved.
+numberofthreads is the number of threads to start. This value should probably not be higher than the amount of cores available on the machine. Default: 4.
+chunksize is an optimization parameter that describes the chunksize each thread should grab at the start of each iteration. Default: 300
+
+

@@ -6,13 +6,13 @@
 #define EMPTY 2
 #define GOAL 3
 
-#define EMPTY_CHAR '.'
+#define EMPTY_CHAR ' '
 #define DEADLOCK_CHAR '!'
 #define WALL_CHAR '#'
-#define BOX_ON_GOAL_CHAR 'O'
-#define GOAL_CHAR '/'
-#define PLAYER_START_CHAR 'x'
-#define BOX_CHAR 'o'
+#define BOX_ON_GOAL_CHAR '*'
+#define GOAL_CHAR '.'
+#define PLAYER_START_CHAR '@'
+#define BOX_CHAR '$'
 // ********************************************
 
 #include "state.h"
@@ -39,8 +39,12 @@ class Map {
 		// start pos of the player
 		Coordinate playersStart;
 		bool *deadLock;
+		int *goalDistance;
 
         bool isBlocked(const int x, const int y, const bool boxMap[], bool visited[]) const;
+
+		int manhattanDistance(const Coordinate, const Coordinate) const;
+
 	public:
 		Map(const string);
         Map(const Map &);
@@ -56,6 +60,7 @@ class Map {
 		bool isGoal(const Coordinate) const;		
 		bool isWall(const Coordinate) const;		
 		bool isDeadLock(const Coordinate) const;
+		int distanceGoal(const Coordinate) const;
         Coordinate calcNormalizedPosition() const;
         Coordinate calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, bool * visitMap) const;
 		vector<State> getSuccessorStates(const State) const;

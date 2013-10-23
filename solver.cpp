@@ -58,18 +58,11 @@ int Solver::heuristic(State state, Map * map) {
 
 
 	int cc = 0;
-    	int box_min = 100000000;
+   	int box_min = 100000000;
 	for (size_t i = 0; i < boxes.size(); i++) {
-	
-		//good is a box is near a goal
-		int min = 10000000;
-		for (size_t j = 0; j < goals.size(); j++) {
-			int tmp = manhattanDistance(boxes[i], goals[j]);
-			if (tmp < min) {
-				min = tmp;
-			}
-		}
-		sum += min;
+		
+		sum += map->distanceGoal(boxes[i]);
+		
 		//if(min < box_min) cc = i;
 		
         /*
@@ -101,9 +94,4 @@ int Solver::heuristic(State state, Map * map) {
 
 	return sum;
 }
-
-int Solver::manhattanDistance(Coordinate first, Coordinate second) {
-	return abs(first.first - second.first) + abs(first.second - second.second);	
-}
-
 

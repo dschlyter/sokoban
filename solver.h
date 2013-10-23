@@ -18,7 +18,6 @@ class compareStates {
 class Solver {
 	private:
 		void printState(State, Map);
-		int manhattanDistance(Coordinate, Coordinate);
 
 		int height;
 		int width;

@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <cstdio>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -9,8 +10,8 @@
 #include "solver.h"
 #include "workerthread.h"
 
-#define PORT 5555 
-#define BUFFERSIZE 1024
+#define PORT 5032
+#define BUFFERSIZE 10024
 
 pthread_mutex_t qMutex;
 pthread_mutex_t sMutex;
@@ -23,8 +24,7 @@ void error(char *msg)
 
 int main(int argc, char *argv[])
 {
-	char *ADDRESS ="cvap103.nada.kth.se";
-	
+	char *ADDRESS ="dd2380.csc.kth.se";
 	//char *ADDRESS ="localhost";
     int sockfd, n;
     struct sockaddr_in serv_addr;
