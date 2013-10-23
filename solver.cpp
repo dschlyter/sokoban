@@ -7,7 +7,6 @@
 #include <set>
 #include "balancedtree.h"
 #include "bucketlist.h"
-#include <cmath>
 
 
 bool compareStates::operator() (const intStatePair & left, const intStatePair & right) const {
@@ -57,35 +56,48 @@ int Solver::heuristic(State state, Map * map) {
 	//eller nu verkar 3 och 2 bra xD
 	int sum = 0; //state.getCost();
 
-    int goalSum[goals.size()];
-    int goalMax = 0;
-    int goalMaxi = 0;
+
+	int cc = 0;
+    	int box_min = 100000000;
 	for (size_t i = 0; i < boxes.size(); i++) {
+	
 		//good is a box is near a goal
 		int min = 10000000;
 		for (size_t j = 0; j < goals.size(); j++) {
 			int tmp = manhattanDistance(boxes[i], goals[j]);
-            goalSum[j]+=tmp;
-            if (goalSum[j] > goalMax){
-                goalMax = goalSum[j];
-                goalMaxi = j;
-            }
 			if (tmp < min) {
 				min = tmp;
 			}
 		}
 		sum += min;
-
+		//if(min < box_min) cc = i;
+		
+        /*
+         * New search algorithm does not store player state
+		//punicshes the player to go away from a blocking box.
+		if(!map->isGoal(boxes[i])){
+			if(	map->isWall(Coordinate(boxes[i].first+1,boxes[i].second)) && 
+				map->isWall(Coordinate(boxes[i].first-1,boxes[i].second)) && 
+				!map->isWall(Coordinate(boxes[i].first,boxes[i].second+1)) && 
+				!map->isWall(Coordinate(boxes[i].first,boxes[i].second-1))){
+				sum += manhattanDistance(player, boxes[i])*2;
+			}else
+			if(	map->isWall(Coordinate(boxes[i].first,boxes[i].second+1)) && 
+				map->isWall(Coordinate(boxes[i].first,boxes[i].second-1)) && 
+				!map->isWall(Coordinate(boxes[i].first+1,boxes[i].second)) && 
+				!map->isWall(Coordinate(boxes[i].first-1,boxes[i].second))){
+				sum += manhattanDistance(player, boxes[i])*2;
+			}
+		}*/
+		
 		//good if box is in a deadlock and goal.
-        //TODO expand for goal packing opt
+        	//TODO expand for goal packing opt
 		if(map->isGoal(boxes[i]) && map->isDeadLock(boxes[i])){
 			sum -= boxes.size();
 		}
 	}
-
-	for (size_t i = 0; i<boxes.size(); i++) {
-        sum += manhattanDistance(boxes[i], goals[goalMaxi]);
-    }
+	//Wtf, increasing when far from goal?
+	//sum -= manhattanDistance(player, boxes[cc]);
 
 	return sum;
 }

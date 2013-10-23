@@ -44,16 +44,11 @@ void WorkerThread::run() {
 
 				states[i] = state;
 				i++;
-
-                if(rand() % 10000 == 0){
-                    solver->gameMap->printState(state);
-                }
 			}
 			pthread_mutex_unlock(&(solver->queueMutex));
 			//cout << "Thread " << number << ": I stole " << i << " nodes, " << solver->queue->size() << " left." << endl << flush;
 			//pthread_mutex_unlock(&(solver->queueMutex));
 			expandedNodes += i;
-
 
 			solver->noExpandedNodes += i;
 			//this->noExpandedNodes++;
@@ -61,6 +56,7 @@ void WorkerThread::run() {
 			for (int s = 0; s < i; s++) {
 				State state = states[s];
 				//cout << "poped state with cost: " << (q->top()).first << endl;
+				//printState(tmp, gameMap);
 				//cout << tmp.getHistory().size() << endl;
 
 				vector<Coordinate> boxes = state.getBoxes();
