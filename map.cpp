@@ -2,11 +2,26 @@
 #include "state.h"
 #include <cstring>
 #include <queue>
+#include <iostream>
+
+using namespace std;
+
+// Debug statistics for different cases of normalized position calculation
+int aCount;
+int bCount;
+int cCount;
+int dCount;
+bool printCounts = false;
 
 Map::Map(const string map){
 	// Calc size of map
 	map_width = 0;
 	map_height = 0;
+
+    aCount = 0;
+    bCount = 0;
+    cCount = 0;
+    dCount = 0;
 
     size_t nl = 0;
     while(true) {
@@ -298,7 +313,6 @@ Coordinate Map::calcNormalizedPosition(const Coordinate startPos, const bool * b
     int minX = map_width+1;
     int minY = map_height+1;
 
-    //kör bfs för att hitta tillåtna moves
     queue<Coordinate> q; 
     q.push(startPos);
     while(!q.empty()){
@@ -337,6 +351,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
         boxMap[boxes[i].second*map_width+boxes[i].first] = true;
     }
 
+    // Moves: L U R D
     static int moveX[] = { -1, 0, 1, 0 };
     static int moveY[] = { 0, -1, 0, 1 };
     
@@ -489,6 +504,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
         successorPushes.push_back(pushes[i]);
     }
 
+    // Add all new states to the priority queue, and calculate their normalized position
     bool visitMap2[map_width * map_height]; 
     for(size_t i=0; i<successorPushes.size(); i++){
         boxPush tmp = successorPushes[i];
@@ -497,42 +513,113 @@ vector<State> Map::getSuccessorStates(const State state) const {
         Coordinate newBoxPos = Coordinate(newPlayerPos.first + moveX[moveType], newPlayerPos.second + moveY[moveType]);
         int playerArrayIndex = newPlayerPos.second * map_width + newPlayerPos.first;
         int boxArrayIndex = newBoxPos.second * map_width + newBoxPos.first;
-        //changeBoxMap
+
+        //temporary change of boxmap for the new stage
         boxMap[boxArrayIndex] = true;
         boxMap[playerArrayIndex] = false;
+
+        // The calcNormalizedPosition is the most intensive operation in the algorithm, since it is called before pushing every new state, and thus it benefits from some heavy optimization. We would prefer not to run this calculation if it can be avoided.
+        
+        // If a box has been pushed from @ to $, and the player is now standing on @
+        // 1@7
+        // 2$6
+        // 345
+        
+        // A new path has opened iff 2 or 6 is unvisited
+        
+        // A path has closed iff box position is visied and one of the below is true
+        // * 2 and 6 are visited, and there is no path between them
+        // * 2 and 4 are visited, and there is no path between them
+        // * 4 and 6 are visited, and there is no path between them
+
+        // TODO try if statement with hardcoded values instead of array lookups
+        int p1 = playerArrayIndex + moveY[(moveType+1)%4] * map_width + moveX[(moveType+1)%4];
+        int p7 = playerArrayIndex + moveY[(moveType+3)%4] * map_width + moveX[(moveType+3)%4];
+
+        int p2 = boxArrayIndex + moveY[(moveType+1)%4] * map_width + moveX[(moveType+1)%4];
+        int p6 = boxArrayIndex + moveY[(moveType+3)%4] * map_width + moveX[(moveType+3)%4];
+
+        int p4 = boxArrayIndex + moveY[moveType] * map_width + moveX[moveType];
+        int p3 = p4 + moveY[(moveType+1)%4] * map_width + moveX[(moveType+1)%4];
+        int p5 = p4 + moveY[(moveType+3)%4] * map_width + moveX[(moveType+3)%4];
+
+        bool p1isUnvisitedPath = !visitMap[p1] && static_map[p1] != WALL && !boxMap[p1];
+        bool p7isUnvisitedPath = !visitMap[p7] && static_map[p7] != WALL && !boxMap[p7];
+        bool newPathOpen = p1isUnvisitedPath || p7isUnvisitedPath;
+
+        bool existingPathClosed = false;
+        if(visitMap[boxArrayIndex]) {
+            bool p1v = visitMap[p1];
+            bool p7v = visitMap[p7];
+            bool p2v = visitMap[p2];
+            bool p6v = visitMap[p6];
+            bool p3v = visitMap[p3];
+            bool p4v = visitMap[p4];
+            bool p5v = visitMap[p5];
+
+            if((p2v && p4v && !p3v) || (p4v && p6v && !p5v) 
+                || (p2v && p6v && (!p1v || !p7v) && (!p3v || !p4v || !p5v)) ) {
+                existingPathClosed = true;
+            }
+        }
+
         Coordinate normalizedPosition;
-        //If newBoxPos is unvisited or if box is has blocked squares to the left and right, we can reuse the visitmap
-        int rightArrayIndex = boxArrayIndex + moveY[(moveType+1)%4] * map_width + moveX[(moveType+1)%4];
-        int leftArrayIndex = boxArrayIndex + moveY[(moveType+3)%4] * map_width + moveX[(moveType+3)%4];
-        if(!visitMap[boxArrayIndex] || ((boxMap[leftArrayIndex] || static_map[leftArrayIndex] == WALL) && (boxMap[rightArrayIndex] || static_map[rightArrayIndex] == WALL))){
+        if(!newPathOpen && !existingPathClosed) {
+            // No paths have been changed, reuse existing position
+            normalizedPosition = Coordinate(minX, minY);
+            aCount++;
+        } else if(newPathOpen && !existingPathClosed) {
+            // A new path has opened, only examine new locations and compare with existing position
+            // We reuse the exiting visited map to avoid visiting new states
             memcpy(visitMap2, visitMap, sizeof(bool)*map_width*map_height);
             normalizedPosition = calcNormalizedPosition(newPlayerPos, boxMap, visitMap2);
+            
             //Check if newfound position is better than the old one
-            if(normalizedPosition.second > minY || (normalizedPosition.second == minY && normalizedPosition.first < minX)){
+            if(normalizedPosition.second > minY 
+                    || (normalizedPosition.second == minY && normalizedPosition.first > minX)){
                 normalizedPosition = Coordinate(minX, minY);
             }
-        } else {
-            //Otherwise it needs to be calculated from scratch
+
+            bCount++;
+        } else if(!newPathOpen && existingPathClosed) {
+            // TODO Calculate new position, but abort if we find our way to the closed paths
             memset(visitMap2, 0, sizeof(bool)*map_width*map_height);
             normalizedPosition = calcNormalizedPosition(newPlayerPos, boxMap, visitMap2);
+            cCount++;
+        } else {
+            // A combination of closed and opened paths
+            // Calculate everything from scratch (this should be rare)
+            memset(visitMap2, 0, sizeof(bool)*map_width*map_height);
+            normalizedPosition = calcNormalizedPosition(newPlayerPos, boxMap, visitMap2);
+            dCount++;
         }
+
         //reset boxMap
         boxMap[boxArrayIndex] = false;
         boxMap[playerArrayIndex] = true;
+
         //change box location and push
-        //TODO optimize O(n) loop
         vector<Coordinate> newBoxes = vector<Coordinate>(boxes);
         for(size_t j=0; j<newBoxes.size(); j++){
             if(newBoxes[j] == newPlayerPos){
                 newBoxes[j] = newBoxPos;
             }
         }
-        ret.push_back(State(normalizedPosition,newBoxes, cost+1,newPlayerPos,tmp.second));
+
+        ret.push_back(State(normalizedPosition, newBoxes, cost+1, newPlayerPos, tmp.second));
     }
     return ret;
 }
 
 string Map::backtrack(const State * winningState, map<U64, parentState> * parentStates) const{
+    if(printCounts) {
+        cerr << "Normalized position stats:" << endl;
+        cerr << "No new path: " << aCount << endl;
+        cerr << "Open path:   " << bCount << endl;
+        cerr << "Closed path: " << cCount << endl;
+        cerr << "Both:        " << dCount << endl;
+    }
+
     //Thus function builds a string of moves
     string ret = "";
 

@@ -20,8 +20,6 @@
 #include "state.h"
 #include "solver.h"
 
-
-
 typedef pair<int, State> intStatePair;
 
 //---------------------------------------------------------------------------
