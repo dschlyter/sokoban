@@ -9,10 +9,10 @@ for file in "$DIR/"*.in; do
     cat $file | timeout 11 "$DIR/../bin/iss"
 
     if [ $? -eq 0 ]; then 
-        $((SUCCESS += 1))
+        SUCCESS=$((SUCCESS + 1))
     else
         echo " --- Time Limit Exceeded --- "
-        $((FAIL += 1))
+        FAIL=$((FAIL + 1))
     fi
 
     echo Successful maps: $SUCCESS Failed maps: $FAIL
