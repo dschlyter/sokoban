@@ -5,8 +5,8 @@ LIBS	= -pthread
 
 all: solver
 
-solver: solver.o state.o map.o client.o workerthread.o thread.o bucketlist.h balancedtree.h 
-	$(CC) -o ${BINDIR}iss ${LIBS} solver.o state.o map.o client.o workerthread.o thread.o
+solver: solver.o state.o map.o main.o workerthread.o thread.o bucketlist.h balancedtree.h 
+	$(CC) -o ${BINDIR}iss ${LIBS} solver.o state.o map.o main.o workerthread.o thread.o
 
 debug: *.cpp
 	$(CC) -o ${BINDIR}debug ${CFLAGS} -g ${LIBS} *.cpp
@@ -20,6 +20,9 @@ thread.o: thread.cpp thread.h
 client.o: client.cpp solver.h
 	$(CC) ${CFLAGS} ${LIBS} -c client.cpp
 
+main.o: main.cpp solver.h
+	$(CC) ${CFLAGS} ${LIBS} -c main.cpp
+	
 solver.o: solver.cpp solver.h map.h state.h balancedtree.h bucketlist.h
 	$(CC) ${CFLAGS} ${LIBS} -c solver.cpp
 
