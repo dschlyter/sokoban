@@ -1,6 +1,6 @@
 BINDIR	= bin/
 CC		= g++
-CFLAGS	= -w -Wall -O2
+CFLAGS	= -g -w -Wall -O2
 LIBS	= 
 
 all: solver
