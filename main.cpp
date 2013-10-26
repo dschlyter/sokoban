@@ -4,8 +4,8 @@
 #include "solver.h"
 #include "workerthread.h"
 
-#define BUFFERSIZE 10024
-#define CHUNKSIZE 300
+#define BUFFERSIZE 4096 
+#define CHUNKSIZE 900
 
 
 int main(int argc, char *argv[])
