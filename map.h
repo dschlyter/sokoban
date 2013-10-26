@@ -11,7 +11,8 @@
 #define WALL_CHAR '#'
 #define BOX_ON_GOAL_CHAR '*'
 #define GOAL_CHAR '.'
-#define PLAYER_START_CHAR '@'
+#define PLAYER_CHAR '@'
+#define PLAYER_ON_GOAL_CHAR '+'
 #define BOX_CHAR '$'
 // ********************************************
 

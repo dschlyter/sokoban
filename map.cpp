@@ -42,7 +42,12 @@ Map::Map(const string map){
 				static_map[row*map_width+col] = GOAL;
 				goals.push_back(Coordinate(col, row));
 				break;
-			case PLAYER_START_CHAR:
+			case PLAYER_ON_GOAL_CHAR:
+				static_map[row*map_width+col] = GOAL;
+				goals.push_back(Coordinate(col, row));
+                playersStart = Coordinate(col,row);
+				break;
+			case PLAYER_CHAR:
 				static_map[row*map_width+col] = EMPTY;
                 playersStart = Coordinate(col,row);
 				break;
