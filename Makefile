@@ -17,9 +17,6 @@ workerthread.o: workerthread.cpp solver.h thread.h
 thread.o: thread.cpp thread.h
 	$(CC) ${CFLAGS} ${LIBS} -c thread.cpp
 
-client.o: client.cpp solver.h
-	$(CC) ${CFLAGS} ${LIBS} -c client.cpp
-
 main.o: main.cpp solver.h
 	$(CC) ${CFLAGS} ${LIBS} -c main.cpp
 	
