@@ -109,11 +109,11 @@ void WorkerThread::run() {
 	if (win) {
 		pthread_mutex_lock(&(solver->winMutex));
 
-		cout << "Solution found!" << endl << endl;
-	    cout << "Total number of expanded nodes: " << solver->noExpandedNodes << endl;
-		solver->gameMap->printState(*winningState);
+		//cout << "Solution found!" << endl << endl;
+	    //cout << "Total number of expanded nodes: " << solver->noExpandedNodes << endl;
+		//solver->gameMap->printState(*winningState);
 		string history = solver->gameMap->backtrack(winningState, &(solver->parentStates));
-		cout << "Solution: " << history << endl;
+		//cout << "Solution: " << history << endl;
 		solver->solution = new char[history.size()+5];
 		strcpy(solver->solution, history.c_str());
 

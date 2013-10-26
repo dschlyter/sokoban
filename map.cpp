@@ -192,8 +192,8 @@ Map::Map(const string map){
 	}
 
 
-    std::cout << "Precalculated deadlock positions marked with " << DEADLOCK_CHAR << endl << endl;
-	std::cout<<*this<<std::endl;
+    //std::cout << "Precalculated deadlock positions marked with " << DEADLOCK_CHAR << endl << endl;
+	//std::cout<<*this<<std::endl;
 }
 
 Map::~Map(){
