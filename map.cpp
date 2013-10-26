@@ -3,14 +3,22 @@
 #include <cstring>
 #include <queue>
 
-
 Map::Map(const string map){
 	// Calc size of map
-	map_width = map.find('\n'); 
-	map_height=0;
+	map_width = 0;
+	map_height = 0;
 
-	for(size_t i=0; (i=map.find('\n', i+1))!=string::npos ;++map_height){} 
-	
+    size_t nl = 0;
+    while(true) {
+        size_t next_nl = map.find('\n', nl+1);
+        if(next_nl == string::npos) break;
+
+        ++map_height;
+        size_t width = next_nl - nl;
+        if(width > map_width) map_width = width;
+
+        nl = next_nl;
+    }
 
 	static_map = new char[map_height*map_width];
 	deadLock = new bool[map_height*map_width];
