@@ -1,21 +1,18 @@
 BINDIR	= bin/
 CC		= g++
 CFLAGS	= -w -Wall -O2
-LIBS	= -pthread
+LIBS	= 
 
 all: solver
 
-solver: solver.o state.o map.o main.o workerthread.o thread.o bucketlist.h balancedtree.h 
-	$(CC) -o ${BINDIR}iss ${LIBS} solver.o state.o map.o main.o workerthread.o thread.o
+solver: solver.o state.o map.o main.o workerthread.o bucketlist.h balancedtree.h 
+	$(CC) -o ${BINDIR}iss ${LIBS} solver.o state.o map.o main.o workerthread.o
 
 debug: *.cpp
 	$(CC) -o ${BINDIR}debug ${CFLAGS} -g ${LIBS} *.cpp
 
-workerthread.o: workerthread.cpp solver.h thread.h
+workerthread.o: workerthread.cpp solver.h 
 	$(CC) ${CFLAGS} ${LIBS} -c workerthread.cpp
-
-thread.o: thread.cpp thread.h
-	$(CC) ${CFLAGS} ${LIBS} -c thread.cpp
 
 main.o: main.cpp solver.h
 	$(CC) ${CFLAGS} ${LIBS} -c main.cpp

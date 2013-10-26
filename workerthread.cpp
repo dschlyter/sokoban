@@ -30,9 +30,7 @@ void WorkerThread::run() {
 			break;
 		}
 
-		pthread_mutex_lock(&(solver->queueMutex));
 		if (solver->queue->size() == 0) {
-			pthread_mutex_unlock(&(solver->queueMutex));
 			usleep(100000); // sleep 1ms
 		} 
 		else {
@@ -45,9 +43,7 @@ void WorkerThread::run() {
 				states[i] = state;
 				i++;
 			}
-			pthread_mutex_unlock(&(solver->queueMutex));
 			//cout << "Thread " << number << ": I stole " << i << " nodes, " << solver->queue->size() << " left." << endl << flush;
-			//pthread_mutex_unlock(&(solver->queueMutex));
 			expandedNodes += i;
 
 			solver->noExpandedNodes += i;
@@ -93,7 +89,6 @@ void WorkerThread::run() {
 				break;
 			}
 
-			pthread_mutex_lock(&(solver->queueMutex));
 			
 			for (size_t i = 0; i < toPushParents.size(); i++) {
 	
@@ -102,12 +97,10 @@ void WorkerThread::run() {
 				solver->queue->push(toPushQueue[i]);
 			}
 
-			pthread_mutex_unlock(&(solver->queueMutex));
 			delete[] states;
 		}
 	}
 	if (win) {
-		pthread_mutex_lock(&(solver->winMutex));
 
 		//cout << "Solution found!" << endl << endl;
 	    //cout << "Total number of expanded nodes: " << solver->noExpandedNodes << endl;
@@ -117,7 +110,6 @@ void WorkerThread::run() {
 		solver->solution = new char[history.size()+5];
 		strcpy(solver->solution, history.c_str());
 
-		pthread_mutex_unlock(&(solver->winMutex));
 		
 		delete[] states;
 		delete winningState;

@@ -5,7 +5,6 @@
 #include "workerthread.h"
 
 #define BUFFERSIZE 10024
-#define THREADS 4
 #define CHUNKSIZE 300
 
 
@@ -20,20 +19,13 @@ int main(int argc, char *argv[])
 	solver->init(buffer);
 
 
-	ThreadPtr * threadArray = new ThreadPtr[THREADS];
+	WorkerThread * worker = new WorkerThread(solver, 0);
 
-	for (int i = 0; i < THREADS; i++) {
-		threadArray[i] = ThreadPtr(new WorkerThread(solver, i));
-		threadArray[i]->start();
-	}
-	
-	for (int i = 0; i < THREADS; i++) {
-		threadArray[i]->wait();
-	}
+	worker->run();
 
 	char *MYSOL = solver->solution;
-	delete[] threadArray;
 	delete solver;
+	delete worker;
 
 	cout << MYSOL << endl << flush;
 	return 0;

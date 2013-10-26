@@ -37,10 +37,6 @@ class Solver {
 		
 		//priority_queue<intStatePair, vector<intStatePair>, compareStates> * queue;
 		TStorage<int, intStatePair> * queue;
-		pthread_mutex_t queueMutex;
-		pthread_mutex_t setMutex;
-		pthread_mutex_t winMutex;
-		pthread_mutex_t countMutex;
 };
 
 #endif

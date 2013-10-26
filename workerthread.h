@@ -1,9 +1,8 @@
 #ifndef WORKERTHREAD
 #define WORKERTHREAD
-#include "thread.h"
 #include "solver.h"
 
-class WorkerThread : public Thread {
+class WorkerThread {
 	public:
 		WorkerThread(Solver *, int);
 		void run();

@@ -20,11 +20,6 @@ Solver::Solver(int chunksize) {
 
 void Solver::init(char* map) {
 
-	pthread_mutex_init(&queueMutex, 0);
-	pthread_mutex_init(&setMutex, 0);
-	pthread_mutex_init(&winMutex, 0);
-	pthread_mutex_init(&countMutex, 0);
-	
 	solution = 0;
 	this->noExpandedNodes = 0;
 
