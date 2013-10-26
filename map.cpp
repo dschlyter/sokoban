@@ -96,8 +96,6 @@ Map::Map(const string map){
 	// Deadlock detection
 	for(size_t y=0; y<map_height-1 ;++y){
 		for(size_t x=0; x<map_width-1 ;++x){
-			int walls = 0;
-			Coordinate empty = Coordinate(0,0);
 			// x .
 			// . .
 			if(static_map[y*map_width+x] == WALL && static_map[(y+1)*map_width+x+1] == WALL){
@@ -281,7 +279,7 @@ Coordinate Map::calcNormalizedPosition() const{
     memset(boxMap, 0, sizeof(bool)*map_width*map_height);
     memset(visitMap, 0, sizeof(bool)*map_width*map_height);
 
-    for(int i=0; i<boxesStart.size(); i++){
+    for(size_t i=0; i<boxesStart.size(); i++){
         Coordinate box = boxesStart[i];
         boxMap[box.second * map_width + box.first] = true;
     }
@@ -335,11 +333,10 @@ vector<State> Map::getSuccessorStates(const State state) const {
     bool visitMap[map_height*map_width];
     memset(boxMap, 0, sizeof(bool)*map_width*map_height);
     memset(visitMap, 0, sizeof(bool)*map_width*map_height);
-    for(int i=0; i<boxes.size(); i++){
+    for(size_t i=0; i<boxes.size(); i++){
         boxMap[boxes[i].second*map_width+boxes[i].first] = true;
     }
 
-    static string move[] = { "L", "U", "R", "D" };
     static int moveX[] = { -1, 0, 1, 0 };
     static int moveY[] = { 0, -1, 0, 1 };
     
@@ -392,7 +389,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
     memset(corralMap, 0, sizeof(int)*map_width*map_height);
 
     //Iterate over all possible pushes
-    for(int i=0; i<pushes.size() && !foundPICorral; i++){
+    for(size_t i=0; i<pushes.size() && !foundPICorral; i++){
         Coordinate square = pushes[i].first;
         int moveType = pushes[i].second;
         int pushArrayIndex = (square.second + moveY[moveType]) * map_width + (square.first + moveX[moveType]);
@@ -446,7 +443,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
 
     //Node pruning
     vector<boxPush> successorPushes;
-    for(int i=0; i<pushes.size(); i++){
+    for(size_t i=0; i<pushes.size(); i++){
         Coordinate pos = pushes[i].first;
         int moveType = pushes[i].second;
         //If a PI-corral has been found, prune all nodes that are not PI-corrals
@@ -493,7 +490,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
     }
 
     bool visitMap2[map_width * map_height]; 
-    for(int i=0; i<successorPushes.size(); i++){
+    for(size_t i=0; i<successorPushes.size(); i++){
         boxPush tmp = successorPushes[i];
         Coordinate newPlayerPos = tmp.first;
         int moveType = tmp.second;
@@ -543,7 +540,7 @@ string Map::backtrack(const State * winningState, map<U64, parentState> * parent
     vector<Coordinate> boxes = winningState->getBoxes();
     bool boxMap[map_height*map_width];
     memset(boxMap, 0, sizeof(bool)*map_width*map_height);
-    for(int i=0; i<boxes.size(); i++){
+    for(size_t i=0; i<boxes.size(); i++){
         boxMap[boxes[i].second*map_width+boxes[i].first] = true;
     }
 
@@ -585,7 +582,7 @@ string Map::backtrack(const State * winningState, map<U64, parentState> * parent
         //reset visited map and history
         memset(visitMap, 0, sizeof(bool)*map_width*map_height);
         visitMap[currentPos.second * map_width + currentPos.first] = true;
-        for(int i=0; i<map_height*map_width; i++){
+        for(size_t i=0; i<map_height*map_width; i++){
             historyMap[i] = "";
         }
 
@@ -627,8 +624,8 @@ string Map::backtrack(const State * winningState, map<U64, parentState> * parent
 //Function used for debugging
 void Map::printState(const State & state) const {
 	cout << "Pushes: " << state.getCost() << endl << endl;
-	for (int y = 0; y < height(); y++) {
-		for (int x = 0; x < width(); x++) {
+	for (size_t y = 0; y < height(); y++) {
+		for (size_t x = 0; x < width(); x++) {
 			Coordinate tmp;
 			tmp.first = x;
 			tmp.second = y;
@@ -641,7 +638,7 @@ void Map::printState(const State & state) const {
 			else {
 				vector<Coordinate> boxes = state.getBoxes();
 				bool done = false;
-				for (int i = 0; i < boxes.size(); i++) {
+				for (size_t i = 0; i < boxes.size(); i++) {
 					if (boxes[i].first == x && boxes[i].second == y) {
 						done = true;
                         if(isGoal(tmp)){

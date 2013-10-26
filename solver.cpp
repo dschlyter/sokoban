@@ -27,7 +27,6 @@ void Solver::init(char* map) {
 	//cout << gameMap.width() << " " << gameMap.height() << endl;
 	Coordinate normalizedStartPos = gameMap->calcNormalizedPosition();
 
-	int height = gameMap->height()*gameMap->width();
     State::initZobristHash(gameMap->width(), gameMap->height());
 	State initialState = State(normalizedStartPos, gameMap->getBoxes(), gameMap->getStart());
 	parentStates.insert(psMap(initialState.getHash(),parentState(0,stateMove(initialState.getMoveLoc(),initialState.getMoveType()))));
@@ -45,15 +44,11 @@ void Solver::init(char* map) {
 int Solver::heuristic(State state, Map * map) {
 	vector<Coordinate> boxes = state.getBoxes();
 	vector<Coordinate> goals = map->getGoals();
-	Coordinate player = state.getPlayerPosition();
 
 	//TODO opt, 5 verkar bra på nr 2
 	//eller nu verkar 3 och 2 bra xD
 	int sum = 0; //state.getCost();
 
-
-	int cc = 0;
-   	int box_min = 100000000;
 	for (size_t i = 0; i < boxes.size(); i++) {
 		
 		sum += map->distanceGoal(boxes[i]);
