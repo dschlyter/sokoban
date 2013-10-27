@@ -66,6 +66,7 @@ class Map {
         Coordinate calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, bool * visitMap) const;
 		vector<State> getSuccessorStates(const State) const;
         string backtrack(const State * winningState, map<U64, parentState> * parentStates) const;
+        bool verifySolution(char *sol) const;
         void printState(const State & state) const;
 		friend ostream& operator<<(ostream &out, const Map &a );
 };
