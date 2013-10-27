@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <cstring>
 #include "solver.h"
 #include "workerthread.h"
 
@@ -11,16 +12,14 @@
 int main(int argc, char *argv[])
 {
     char buffer[BUFFERSIZE];
+    memset(buffer, 0, BUFFERSIZE);
 	
 	ssize_t n = fread(buffer, 1, BUFFERSIZE, stdin);
-
 
 	Solver * solver = new Solver(CHUNKSIZE);
 	solver->init(buffer);
 
-
 	WorkerThread * worker = new WorkerThread(solver, 0);
-
 	worker->run();
 
 	char *MYSOL = solver->solution;
