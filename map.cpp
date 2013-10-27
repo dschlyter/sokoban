@@ -561,6 +561,11 @@ vector<State> Map::getSuccessorStates(const State state) const {
                 || (p2v && p6v && (!p1v || !p7v) && (!p3v || !p4v || !p5v)) ) {
                 existingPathClosed = true;
             }
+
+            bool boxPushedOntoNormalizedPosition = newBoxPos.first == minX && newBoxPos.second == minY;
+            if(boxPushedOntoNormalizedPosition) {
+                existingPathClosed = true;
+            }
         }
 
         Coordinate normalizedPosition;
@@ -592,6 +597,15 @@ vector<State> Map::getSuccessorStates(const State state) const {
             memset(visitMap2, 0, sizeof(bool)*map_width*map_height);
             normalizedPosition = calcNormalizedPosition(newPlayerPos, boxMap, visitMap2);
             dCount++;
+        }
+
+        // The new player position can be the new normalized position, 
+        // but will not be reached by some optimized searches,
+        // make a special case check for it
+        if (normalizedPosition.second > newPlayerPos.second 
+                || (normalizedPosition.second == newPlayerPos.second 
+                    && normalizedPosition.first > newPlayerPos.first)) {
+            normalizedPosition = newPlayerPos;
         }
 
         //reset boxMap
