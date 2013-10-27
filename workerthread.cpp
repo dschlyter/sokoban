@@ -16,89 +16,61 @@ WorkerThread::WorkerThread(Solver * solver, int number) {
 void WorkerThread::run() {
 	bool win = true;
 	State * winningState = 0;
-	expandedNodes = 0;
 
 	while (true) {
 		
-		this->states = new State[solver->chunksize];
 		toPushParents.clear();
 		toPushQueue.clear();
 
-		if (solver->isDone) {
-			//cout << "#####################" << endl << "THREAD " << number << " WON!" << endl << "#####################" << endl << flush;
-			win = false;
-			break;
-		}
+		//cout << "Thread " << number << ": MWAHA, MY NODES!" << endl << flush;		
+		int i = 0;
+		while (i < solver->chunksize && solver->queue->size() > 0)  {
 
-		if (solver->queue->size() == 0) {
-			usleep(100000); // sleep 1ms
-		} 
-		else {
-			//cout << "Thread " << number << ": MWAHA, MY NODES!" << endl << flush;		
-			int i = 0;
-			while (solver->queue->size() > 0 && i < solver->chunksize) {
-				State state = (solver->queue->top()).second;
-				solver->queue->pop();
+			State state = (solver->queue->pop()).second;
 
-				states[i] = state;
-				i++;
-			}
-			//cout << "Thread " << number << ": I stole " << i << " nodes, " << solver->queue->size() << " left." << endl << flush;
-			expandedNodes += i;
-
-			solver->noExpandedNodes += i;
-			//this->noExpandedNodes++;
-
-			for (int s = 0; s < i; s++) {
-				State state = states[s];
-				//cout << "poped state with cost: " << (q->top()).first << endl;
-				//printState(tmp, gameMap);
-				//cout << tmp.getHistory().size() << endl;
-
-				vector<Coordinate> boxes = state.getBoxes();
-				win = true;
-				for (size_t i = 0; i < boxes.size(); i++) {
-					if (!solver->gameMap->isGoal(boxes[i]))
-					{
-						win = false;
-						break;
-					}
-				}
-				if (win) {
-					solver->isDone = true;
-					//solver->gameMap->printState(state);
-					winningState = new State(state);
+			vector<Coordinate> boxes = state.getBoxes();
+			win = true;
+			for (size_t j = 0; j < boxes.size(); j++) {
+				if (!solver->gameMap->isGoal(boxes[j]))
+				{
+					win = false;
 					break;
 				}
-
-				vector<State> newStates = solver->gameMap->getSuccessorStates(state);
-			
-				for (size_t i = 0; i < newStates.size(); i++) {
-					State stateChild = newStates[i];
-					
-					toPushParents.push_back(psMap(stateChild.getHash(), parentState(state.getHash(), stateMove(stateChild.getMoveLoc(), stateChild.getMoveType()))));
-
-					int heur = solver->heuristic(stateChild, solver->gameMap);
-
-					pair<int, State> pa(heur, stateChild);
-					toPushQueue.push_back(pa);
-				}
 			}
-
 			if (win) {
+				solver->isDone = true;
+				//solver->gameMap->printState(state);
+				winningState = new State(state);
 				break;
 			}
 
-			
-			for (size_t i = 0; i < toPushParents.size(); i++) {
-	
-				if (!(solver->parentStates.insert(toPushParents[i]).second))
-					continue;
-				solver->queue->push(toPushQueue[i]);
-			}
+			vector<State> newStates = solver->gameMap->getSuccessorStates(state);
 
-			delete[] states;
+			for (size_t j = 0; j < newStates.size(); j++) {
+				State stateChild = newStates[j];
+
+				toPushParents.push_back(psMap(stateChild.getHash(), parentState(state.getHash(), stateMove(stateChild.getMoveLoc(), stateChild.getMoveType()))));
+
+				int heur = solver->heuristic(stateChild, solver->gameMap);
+
+				pair<int, State> pa(heur, stateChild);
+				toPushQueue.push_back(pa);
+			}
+			i++;
 		}
+
+		if (win) {
+			break;
+		}
+
+
+		for (size_t i = 0; i < toPushParents.size(); i++) {
+
+			if (!(solver->parentStates.insert(toPushParents[i]).second))
+				continue;
+			solver->queue->push(toPushQueue[i]);
+		}
+		//solver->printHeuristics();
 	}
 	if (win) {
 
@@ -111,7 +83,6 @@ void WorkerThread::run() {
 		strcpy(solver->solution, history.c_str());
 
 		
-		delete[] states;
 		delete winningState;
 
 		//return "D";

@@ -5,8 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <set>
-#include "balancedtree.h"
-#include "bucketlist.h"
+#include "bucketqueue.h"
 
 
 bool compareStates::operator() (const intStatePair & left, const intStatePair & right) const {
@@ -17,6 +16,25 @@ bool compareStates::operator() (const intStatePair & left, const intStatePair & 
 Solver::Solver(int chunksize) {
 	this->chunksize = chunksize;
 }
+
+/*
+void Solver::printHeuristics() {
+	TStorageNode<int, intStatePair> * node = queue->GetFirst();
+	int count = 1;
+	int current = node->GetKey();
+
+	while (node->GetNext()) {
+		if (node->GetKey() == current) {
+			count++;
+		} else {
+			cout << current << ": " << count << endl << flush;
+			count = 1;
+			current = node->GetKey();
+		}
+		node = node->GetNext();
+	}
+}
+*/
 
 void Solver::init(char* map) {
 
@@ -31,7 +49,8 @@ void Solver::init(char* map) {
 	State initialState = State(normalizedStartPos, gameMap->getBoxes(), gameMap->getStart());
 	parentStates.insert(psMap(initialState.getHash(),parentState(0,stateMove(initialState.getMoveLoc(),initialState.getMoveType()))));
 	
-	queue = new TStorage<int, intStatePair>();
+	queue = new BucketQueue(1);
+
 	//BucketList *q = new BucketList(-50, 200, 200);
 	//priority_queue<intStatePair, vector<intStatePair>, compareStates> *q = new priority_queue<intStatePair, vector<intStatePair>, compareStates>();
 

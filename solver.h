@@ -4,7 +4,7 @@
 #include <queue>
 #include "state.h"
 #include "map.h"
-#include "balancedtree.h"
+#include "bucketqueue.h"
 
 using namespace std;
 
@@ -18,7 +18,6 @@ class compareStates {
 class Solver {
 	private:
 		void printState(State, Map);
-
 		int height;
 		int width;
 		int totalSize;
@@ -36,7 +35,8 @@ class Solver {
 		int chunksize;
 		
 		//priority_queue<intStatePair, vector<intStatePair>, compareStates> * queue;
-		TStorage<int, intStatePair> * queue;
+		void printHeuristics();
+		BucketQueue * queue;
 };
 
 #endif
