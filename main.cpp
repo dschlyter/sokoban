@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <cstring>
 #include "solver.h"
 #include "workerthread.h"
 
@@ -12,6 +13,7 @@ bool verifySolution = true;
 int main(int argc, char *argv[])
 {
     char buffer[BUFFERSIZE];
+    memset(buffer, 0, BUFFERSIZE);
 	
 	ssize_t n = fread(buffer, 1, BUFFERSIZE, stdin);
 
