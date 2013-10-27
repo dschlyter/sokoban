@@ -5,19 +5,19 @@ LIBS	=
 
 all: solver
 
-solver: solver.o state.o map.o main.o workerthread.o bucketlist.h balancedtree.h 
+solver: solver.o state.o map.o main.o workerthread.o bucketqueue.h 
 	$(CC) -o ${BINDIR}iss ${LIBS} solver.o state.o map.o main.o workerthread.o
 
 debug: *.cpp
 	$(CC) -o ${BINDIR}debug ${CFLAGS} -g ${LIBS} *.cpp
 
-workerthread.o: workerthread.cpp solver.h 
+workerthread.o: workerthread.cpp solver.h bucketqueue.h
 	$(CC) ${CFLAGS} ${LIBS} -c workerthread.cpp
 
 main.o: main.cpp solver.h
 	$(CC) ${CFLAGS} ${LIBS} -c main.cpp
 	
-solver.o: solver.cpp solver.h map.h state.h balancedtree.h bucketlist.h
+solver.o: solver.cpp solver.h map.h state.h bucketqueue.h
 	$(CC) ${CFLAGS} ${LIBS} -c solver.cpp
 
 state.o: state.cpp state.h

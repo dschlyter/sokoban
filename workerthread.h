@@ -10,9 +10,7 @@ class WorkerThread {
 	private:
 		Solver * solver;
 		int number;
-		int expandedNodes;
 
-		State * states;
 		//set<U64> hashes;
 		vector<psMap> toPushParents;
 		vector<intStatePair> toPushQueue;
