@@ -8,7 +8,7 @@
 #define BUFFERSIZE 4096 
 #define CHUNKSIZE 900
 
-bool verifySolution = true;
+bool verifySolution = false;
 
 int main(int argc, char *argv[])
 {

@@ -2,14 +2,16 @@
 #define BUCKETQUEUE
 
 #include <vector>
+#include <deque>
 #include "state.h"
 typedef pair<int, State> intStatePair;
 
 class BucketQueue {
 	private:
-		vector< vector<intStatePair>* > buckets;
+		vector< deque<intStatePair>* > buckets;
 		size_t noElements;
 		int lowestHeuristic;
+		bool grabFromFront;
 
 		void findNextHeuristicValue() {
 			if (noElements == 0) {
@@ -24,9 +26,10 @@ class BucketQueue {
 
 	public:
 		BucketQueue(const int maxHeuristic){
-			this->buckets = vector< vector<intStatePair>* >();
+			this->buckets = vector< deque<intStatePair>* >();
 			this->noElements = 0;
 			this->lowestHeuristic = -1;
+			this->grabFromFront = true;
 		}
 		~BucketQueue(){
 			//delete buckets;
@@ -58,10 +61,10 @@ class BucketQueue {
 
 			if (!buckets[heuristic]) {
 				//cout << "Bucket " << heuristic << " didn't exist, so created! Size: " << noElements << ", buckets: " << buckets.size() << endl;
-				buckets[heuristic] = new vector<intStatePair>();
+				buckets[heuristic] = new deque<intStatePair>();
 			}
 			
-			vector<intStatePair> * bucket = buckets[heuristic];
+			deque<intStatePair> * bucket = buckets[heuristic];
 			bucket->push_back(p);
 			++noElements;
 
@@ -72,7 +75,7 @@ class BucketQueue {
 		
 		intStatePair pop(){
 			//cout << "Want to POP, current size is " << noElements << ", buckets: " << buckets.size() << endl;
-			vector<intStatePair> * bucket = buckets[lowestHeuristic];
+			deque<intStatePair> * bucket = buckets[lowestHeuristic];
 			//cout << "Current lowest is " << lowestHeuristic << ", size: " << noElements << ", buckets: " << buckets.size() << endl;
 			intStatePair ret;
 
@@ -81,11 +84,22 @@ class BucketQueue {
 				//cout << "Bucket had more than 1 element in it! Size: " << noElements << ", buckets: " << buckets.size() << endl << flush;
 				// Multiple elements in bucket
 				// Grab one at random and place last element in its place.
-				int luckyElement = rand() % bucket->size();
+				//int luckyElement = rand() % bucket->size();
+				if (this->grabFromFront) {
+					ret = bucket->front();
+					bucket->pop_front();
+				} else {
+					ret = bucket->back();
+					bucket->pop_back();
+				}
+				this->grabFromFront = !this->grabFromFront;
+
+				/*
 				ret = (*bucket)[luckyElement];
 				intStatePair last = bucket->back();
 				(*bucket)[luckyElement] = last;
 				bucket->pop_back();
+				*/
 				--noElements;
 				//printState();
 				return ret;
@@ -95,7 +109,7 @@ class BucketQueue {
 			// Last element in bucket
 			// Need to find new lowest heuristic value
 			ret = bucket->front();
-			bucket->pop_back();
+			bucket->pop_front();
 			--noElements;
 			findNextHeuristicValue();
 
