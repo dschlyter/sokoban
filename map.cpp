@@ -707,6 +707,85 @@ string Map::backtrack(const State * winningState, map<U64, parentState> * parent
     }
     return ret;
 }
+
+//For calculating the normalized player position in the initial state
+bool Map::verifySolution(char *sol) const{
+    bool boxMap[map_height*map_width];
+    memset(boxMap, 0, sizeof(bool)*map_width*map_height);
+
+    for(size_t i=0; i<boxesStart.size(); i++){
+        Coordinate box = boxesStart[i];
+        boxMap[box.second * map_width + box.first] = true;
+    }
+
+    int x = playersStart.first;
+    int y = playersStart.second;
+
+    for(int i = 0; sol[i] != '\0'; i++) {
+        char move = sol[i];
+        int dx = 0;
+        int dy = 0;
+        
+        if(move == 'L') dx = -1;
+        else if (move == 'U') dy = -1;
+        else if (move == 'R') dx = 1;
+        else if (move == 'D') dy = 1;
+        else {
+            cerr << "Invalid move: " << move << endl;
+            return false;
+        }
+
+        int newX = x + dx;
+        int newY = y + dy;
+        int newIndex = newY * map_width + newX;
+        if(static_map[newIndex] == WALL) {
+            cerr << "Move " << i << " invalid, tried to move into wall" << endl;
+            return false;
+        }
+
+        if(boxMap[newIndex]) {
+            int boxNewX = newX + dx;
+            int boxNewY = newY + dy;
+            int boxIndex = boxNewY * map_width + boxNewX;
+
+            if(static_map[newIndex] == WALL) {
+                cerr << "Move " << i << " invalid, tried to move box into wall" << endl;
+                return false;
+            }
+
+            if(boxMap[boxIndex]) {
+                cerr << "Move " << i << " invalid, tried to move box into another box" << endl;
+                return false;
+            }
+
+            boxMap[newIndex] = false;
+            boxMap[boxIndex] = true;
+        }
+
+        x = newX;
+        y = newY;
+    }
+
+    bool success = true;
+    // All moves done, check for valid solution
+    for(size_t i=0; i< map_width * map_height; i++) {
+        if(static_map[i] == EMPTY && boxMap[i]) {
+            success = false;
+            int x = i / map_width;
+            int y = i % map_width; 
+            cerr << "Invalid solution, box is on empty space at X: " << x << ", Y: " << y << endl;
+        }
+
+        if(static_map[i] == GOAL && !boxMap[i]) {
+            success = false;
+            int x = i / map_width;
+            int y = i % map_width; 
+            cerr << "Invalid solution, no box on goal at X: " << x << ", Y: " << y << endl;
+        }
+    }
+
+    return success;
+}
     
 //Function used for debugging
 void Map::printState(const State & state) const {

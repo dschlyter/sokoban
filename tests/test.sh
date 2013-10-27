@@ -8,10 +8,18 @@ for file in "$DIR/"*.in; do
     echo $file
     cat $file | timeout 11 "$DIR/../bin/iss"
 
-    if [ $? -eq 0 ]; then 
+    RET=$?
+    if [ $RET -eq 0 ]; then 
         SUCCESS=$((SUCCESS + 1))
     else
-        echo " --- Time Limit Exceeded --- "
+        if [ $RET -eq 1 ]; then
+            echo; echo; echo " !!!!! - Invalid solution - !!!!!"
+            echo; echo
+            echo "Press enter to continue"
+            read
+        else 
+            echo " --- Time Limit Exceeded --- "
+        fi
         FAIL=$((FAIL + 1))
     fi
 
