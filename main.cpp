@@ -3,7 +3,6 @@
 #include <iostream>
 #include <cstring>
 #include "solver.h"
-#include "workerthread.h"
 
 #define BUFFERSIZE 4096 
 #define CHUNKSIZE 900
@@ -17,13 +16,10 @@ int main(int argc, char *argv[])
 
 	Solver * solver = new Solver(CHUNKSIZE);
 	solver->init(buffer);
-
-	WorkerThread * worker = new WorkerThread(solver, 0);
-	worker->run();
+    solver->solve();
 
 	char *solution = solver->solution;
 	delete solver;
-	delete worker;
 
 	cout << solution << endl << flush;
     

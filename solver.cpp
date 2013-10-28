@@ -59,6 +59,78 @@ void Solver::init(char* map) {
 	
 }	
 
+void Solver::solve() {
+	bool win = true;
+	State * winningState = 0;
+
+	while (true) {
+        toPushQueue.clear();
+        toPushParents.clear();
+
+		int i = 0;
+		while (i < this->chunksize && this->queue->size() > 0)  {
+			State state = (this->queue->pop()).second;
+
+			vector<Coordinate> boxes = state.getBoxes();
+			win = true;
+			for (size_t j = 0; j < boxes.size(); j++) {
+				if (!this->gameMap->isGoal(boxes[j]))
+				{
+					win = false;
+					break;
+				}
+			}
+			if (win) {
+				this->isDone = true;
+				//solver->gameMap->printState(state);
+				winningState = new State(state);
+				break;
+			}
+
+			vector<State> newStates = this->gameMap->getSuccessorStates(state);
+
+			for (size_t j = 0; j < newStates.size(); j++) {
+				State stateChild = newStates[j];
+
+				toPushParents.push_back(psMap(stateChild.getHash(), parentState(state.getHash(), stateMove(stateChild.getMoveLoc(), stateChild.getMoveType()))));
+
+				int heur = this->heuristic(stateChild, this->gameMap);
+
+				pair<int, State> pa(heur, stateChild);
+				toPushQueue.push_back(pa);
+			}
+			i++;
+		}
+
+		if (win) {
+			break;
+		}
+
+
+		for (size_t i = 0; i < toPushParents.size(); i++) {
+
+			if (!(this->parentStates.insert(toPushParents[i]).second))
+				continue;
+			this->queue->push(toPushQueue[i]);
+		}
+		//solver->printHeuristics();
+	}
+	if (win) {
+		//cout << "Solution found!" << endl << endl;
+	    //cout << "Total number of expanded nodes: " << solver->noExpandedNodes << endl;
+		//solver->gameMap->printState(*winningState);
+		string history = this->gameMap->backtrack(winningState, &(this->parentStates));
+		//cout << "Solution: " << history << endl;
+		this->solution = new char[history.size()+5];
+		strcpy(this->solution, history.c_str());
+
+		
+		delete winningState;
+
+		//return "D";
+	}
+}
+
 
 int Solver::heuristic(State state, Map * map) {
 	vector<Coordinate> boxes = state.getBoxes();

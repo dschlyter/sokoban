@@ -25,6 +25,8 @@ class Solver {
 	public:
 		Solver(int);
 		void init(char*);
+        void solve();
+
 		int noExpandedNodes;
 		int heuristic(State, Map *);
 		map<U64, parentState> parentStates;
@@ -37,6 +39,9 @@ class Solver {
 		//priority_queue<intStatePair, vector<intStatePair>, compareStates> * queue;
 		void printHeuristics();
 		BucketQueue * queue;
+
+        vector<psMap> toPushParents;
+        vector<intStatePair> toPushQueue;
 };
 
 #endif
