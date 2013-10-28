@@ -8,8 +8,6 @@
 #define BUFFERSIZE 4096 
 #define CHUNKSIZE 900
 
-bool verifySolution = false;
-
 int main(int argc, char *argv[])
 {
     char buffer[BUFFERSIZE];
@@ -29,15 +27,15 @@ int main(int argc, char *argv[])
 
 	cout << solution << endl << flush;
     
-    if(verifySolution) {
-        bool valid = solver->gameMap->verifySolution(solution);
-        if(!valid) {
-            cerr << "Solution is invalid :(" << endl;
-            return 1;
-        } else {
-            cerr << "Solution verified successfully! :D" << endl;
-        }
+#ifdef VERIFY_SOLUTION
+    bool valid = solver->gameMap->verifySolution(solution);
+    if(!valid) {
+        cout << "Solution is invalid :(" << endl;
+        return 1;
+    } else {
+        cout << "Solution verified successfully! :D" << endl;
     }
+#endif
 
 	return 0;
 }

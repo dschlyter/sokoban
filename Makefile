@@ -1,6 +1,6 @@
 BINDIR	= bin/
 CC		= g++
-CFLAGS	= -w -Wall -O2
+CFLAGS	= -w -Wall -O2 -DVERIFY_SOLUTION
 
 all: ${BINDIR}iss
 
