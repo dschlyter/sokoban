@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 using namespace std;
 
 typedef pair<Coordinate, int> stateMove;
@@ -65,7 +65,7 @@ class Map {
         Coordinate calcNormalizedPosition() const;
         Coordinate calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, bool * visitMap) const;
 		vector<State> getSuccessorStates(const State) const;
-        string backtrack(const State * winningState, map<U64, parentState> * parentStates) const;
+        string backtrack(const State * winningState, unordered_map<U64, parentState> * parentStates) const;
         bool verifySolution(char *sol) const;
         void printState(const State & state) const;
 		friend ostream& operator<<(ostream &out, const Map &a );

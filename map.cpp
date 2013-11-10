@@ -625,7 +625,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
     return ret;
 }
 
-string Map::backtrack(const State * winningState, map<U64, parentState> * parentStates) const{
+string Map::backtrack(const State * winningState, unordered_map<U64, parentState> * parentStates) const{
     if(printCounts) {
         cerr << "Normalized position stats:" << endl;
         cerr << "No new path: " << aCount << endl;

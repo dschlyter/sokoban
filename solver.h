@@ -1,6 +1,6 @@
 #ifndef SOLVER
 #define SOLVER
-#include <map>
+#include <unordered_map>
 #include <queue>
 #include "state.h"
 #include "map.h"
@@ -29,7 +29,7 @@ class Solver {
 
 		int noExpandedNodes;
 		int heuristic(State, Map *);
-		map<U64, parentState> parentStates;
+		unordered_map<U64, parentState> parentStates;
 
 		Map * gameMap;
 		char * solution;
