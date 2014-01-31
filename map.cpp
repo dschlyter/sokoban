@@ -38,6 +38,7 @@ Map::Map(const string map){
 	static_map = new char[map_height*map_width];
 	deadLock = new bool[map_height*map_width];
 	goalDistance = new int[map_height*map_width];
+	startDistance = new int[map_height*map_width];
 
 	/*for (size_t i = 0; i < map_height; ++i) {
 		static_map[i] = new char[map_width];
@@ -77,6 +78,7 @@ Map::Map(const string map){
 			case BOX_ON_GOAL_CHAR:
 				static_map[row*map_width+col] = GOAL;
 				boxesStart.push_back(Coordinate(col, row));
+				goals.push_back(Coordinate(col, row));
 				break;
 			case BOX_CHAR:
 				static_map[row*map_width+col] = EMPTY;
@@ -108,6 +110,22 @@ Map::Map(const string map){
 		}
 	}
 
+	for (size_t i = 0; i < map_height; i++) {
+		for (size_t j = 0; j < map_width; j++) {
+			int min = 10000000;
+			for (size_t b = 0; b < boxesStart.size(); b++) {
+				Coordinate t;
+				t.first = j;
+				t.second = i;
+				int tmp = manhattanDistance(t, boxesStart[b]);
+				if (tmp < min) {
+					min = tmp;
+				}
+			}
+			startDistance[i*map_width+j] = min;
+		}
+	}
+
 	// Deadlock detection
 	for(size_t y=0; y<map_height-1 ;++y){
 		for(size_t x=0; x<map_width-1 ;++x){
@@ -127,7 +145,7 @@ Map::Map(const string map){
 	} 
 	
 	
-	// advanced collumn deadlock detection!!!!!!!1111one
+	// collumn deadlock detection
 	for(size_t x=1; x<map_width-1 ;++x){
 		size_t first_dead = 0;
 		bool left_wall = true; 
@@ -170,7 +188,7 @@ Map::Map(const string map){
 	}
 
 
-	// advanced row deadlock detection!!!!!!!1111one
+	// row deadlock detection
 	for(size_t y=1; y<map_height-1 ;++y){
 		size_t first_dead = 0;
 		bool up_wall = true;
@@ -334,6 +352,143 @@ Coordinate Map::calcNormalizedPosition(const Coordinate startPos, const bool * b
     }
 
     return Coordinate(minX,minY);
+}
+
+// There can be multiple possible player positions for an end state
+// This calculates all of them
+vector<State> Map::getAllEndStates() const {
+    vector<State> ret;
+    vector<Coordinate> boxes = this->getBoxes();
+
+    bool boxMap[map_height*map_width];
+    bool visitMap[map_height*map_width];
+    memset(boxMap, 0, sizeof(bool)*map_width*map_height);
+    memset(visitMap, 0, sizeof(bool)*map_width*map_height);
+    for(size_t i=0; i<goals.size(); i++){
+        boxMap[goals[i].second*map_width+goals[i].first] = true;
+    }
+
+    // Moves: L U R D
+    static int moveX[] = { -1, 0, 1, 0 };
+    static int moveY[] = { 0, -1, 0, 1 };
+
+    Coordinate dummyPosition = Coordinate(-1,-1);
+
+    for(size_t y=0; y<map_height; y++) {
+        for(size_t x=0; x<map_width; x++) {
+            size_t mapIndex = y * map_width + x;
+            if(boxMap[mapIndex]) {
+                for(int i=0; i<4; i++){
+                    Coordinate moveCoord = Coordinate(x + moveX[i], y + moveY[i]);
+                    int moveArrayIndex = moveCoord.second * map_width + moveCoord.first;
+                    if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL 
+                            && !boxMap[moveArrayIndex]){
+                        Coordinate normalizedPosition = calcNormalizedPosition(moveCoord, boxMap, visitMap);
+
+                        vector<Coordinate> newBoxes = vector<Coordinate>(boxes);
+
+                        ret.push_back(State(normalizedPosition, goals, 0, dummyPosition, -1));
+                    }
+                }
+                 
+            }
+        }
+    }
+
+    return ret;
+}
+
+vector<State> Map::getPredecessorStates(const State state) const {
+    vector<State> ret;
+    Coordinate playerPos = state.getPlayerPosition();
+    vector<Coordinate> boxes = state.getBoxes();
+    int cost = state.getCost();
+
+    bool boxMap[map_height*map_width];
+    bool visitMap[map_height*map_width];
+    memset(boxMap, 0, sizeof(bool)*map_width*map_height);
+    memset(visitMap, 0, sizeof(bool)*map_width*map_height);
+    for(size_t i=0; i<boxes.size(); i++){
+        boxMap[boxes[i].second*map_width+boxes[i].first] = true;
+    }
+
+    // Moves: L U R D
+    static int moveX[] = { -1, 0, 1, 0 };
+    static int moveY[] = { 0, -1, 0, 1 };
+    
+    int minX = map_width+1;
+    int minY = map_height+1;
+
+    typedef pair<Coordinate, int> boxPush;
+    vector<boxPush> pushes;
+    
+    //kör bfs för att hitta tillåtna moves
+    queue<Coordinate> q; 
+    q.push(playerPos);
+    visitMap[playerPos.second * map_width + playerPos.first] = true;
+    while(!q.empty()){
+        Coordinate tmp = q.front();
+        q.pop();
+        if(tmp.second < minY || (tmp.second == minY && tmp.first < minX)){
+            minX = tmp.first;
+            minY = tmp.second;
+        }
+        for(int i=0; i<4; i++){
+            Coordinate moveCoord = Coordinate(tmp.first + moveX[i], tmp.second + moveY[i]);
+            int moveArrayIndex = moveCoord.second * map_width + moveCoord.first;
+            if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL){
+                if(boxMap[moveArrayIndex]){
+                    int pullArrayIndex = moveArrayIndex - (moveY[i]*map_width)*2 - moveX[i] * 2;
+                    //Check if box can be pulled
+                    if(static_map[pullArrayIndex] == WALL || boxMap[pullArrayIndex]){
+                        continue;
+                    }
+                    //Add to list of possible pushes
+                    pushes.push_back(boxPush(moveCoord, i));
+                } else {
+                    //If empty square, keep on searching on neighbours by pushing into queue
+                    visitMap[moveArrayIndex] = 1;
+                    q.push(moveCoord);
+                }
+            }
+        }
+    }
+
+
+    // Add all new states to the priority queue, and calculate their normalized position
+    bool visitMap2[map_width * map_height]; 
+    for(size_t i=0; i<pushes.size(); i++){
+        boxPush tmp = pushes[i];
+        Coordinate newPlayerPos = tmp.first;
+        int moveType = tmp.second;
+        Coordinate newBoxPos = Coordinate(newPlayerPos.first - moveX[moveType], newPlayerPos.second - moveY[moveType]);
+        int playerArrayIndex = newPlayerPos.second * map_width + newPlayerPos.first;
+        int boxArrayIndex = newBoxPos.second * map_width + newBoxPos.first;
+
+        //temporary change of boxmap for the new stage
+        boxMap[boxArrayIndex] = true;
+        boxMap[playerArrayIndex] = false;
+
+        Coordinate normalizedPosition;
+        memset(visitMap2, 0, sizeof(bool)*map_width*map_height);
+        normalizedPosition = calcNormalizedPosition(newPlayerPos, boxMap, visitMap2);
+
+        //reset boxMap
+        boxMap[boxArrayIndex] = false;
+        boxMap[playerArrayIndex] = true;
+
+        //change box location and push
+        vector<Coordinate> newBoxes = vector<Coordinate>(boxes);
+        for(size_t j=0; j<newBoxes.size(); j++){
+            if(newBoxes[j] == newPlayerPos){
+                newBoxes[j] = newBoxPos;
+            }
+        }
+
+        ret.push_back(State(normalizedPosition, newBoxes, cost+1, newPlayerPos, tmp.second));
+    }
+
+    return ret;
 }
 
 vector<State> Map::getSuccessorStates(const State state) const {
@@ -525,7 +680,7 @@ vector<State> Map::getSuccessorStates(const State state) const {
         // 2$6
         // 345
         
-        // A new path has opened iff 2 or 6 is unvisited
+        // A new path has opened iff 1 or 7 is unvisited
         
         // A path has closed iff box position is visied and one of the below is true
         // * 2 and 6 are visited, and there is no path between them
@@ -810,10 +965,14 @@ void Map::printState(const State & state) const {
 			tmp.first = x;
 			tmp.second = y;
 			if (isWall(tmp)) {
-				cout << "#";
+				cout << WALL_CHAR;
 			}
 			else if (state.getPlayerPosition() == tmp) {
-				cout << "x";
+                if (isGoal(tmp)){
+                    cout << PLAYER_ON_GOAL_CHAR;
+                } else {
+				    cout << PLAYER_CHAR;
+                }
 			}
 			else {
 				vector<Coordinate> boxes = state.getBoxes();
@@ -822,18 +981,18 @@ void Map::printState(const State & state) const {
 					if (boxes[i].first == x && boxes[i].second == y) {
 						done = true;
                         if(isGoal(tmp)){
-                            cout << "O";
+                            cout << BOX_ON_GOAL_CHAR;
                         } else {
-                            cout << "o";
+                            cout << BOX_CHAR;
                         }
 						break;
 					}
 				}
 			    if (!done) {
                     if (isGoal(tmp)){
-                        cout << "/";
+                        cout << GOAL_CHAR;
                     } else {
-			            cout << ".";
+			            cout << EMPTY_CHAR;
                     }
 				}
 			}
@@ -855,8 +1014,11 @@ int Map::manhattanDistance(const Coordinate first, const Coordinate second) cons
 }
 
 int Map::distanceGoal(const Coordinate box) const {
-	//return 3;
 	return goalDistance[box.second*map_width+box.first];
+}
+
+int Map::distanceStart(const Coordinate box) const {
+	return startDistance[box.second*map_width+box.first];
 }
 
 ostream& operator<<(ostream &out, const Map &a ){

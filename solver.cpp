@@ -50,42 +50,29 @@ void Solver::init(char* map) {
 	parentStates.insert(psMap(initialState.getHash(),parentState(0,stateMove(initialState.getMoveLoc(),initialState.getMoveType()))));
 	
 	queue = new BucketQueue(1);
-
-	//BucketList *q = new BucketList(-50, 200, 200);
-	//priority_queue<intStatePair, vector<intStatePair>, compareStates> *q = new priority_queue<intStatePair, vector<intStatePair>, compareStates>();
-
-	//q->push(heuristic(initialState, gameMap), initialState);
 	queue->push(intStatePair(heuristic(initialState, gameMap), initialState));
 	
+    reverseQueue = new BucketQueue(1);
+    vector<State> goalStates = gameMap->getAllEndStates();
+    for(size_t i=0; i<goalStates.size(); i++) {
+        State goalState = goalStates[i];
+        reverseParentStates.insert(psMap(goalState.getHash(),parentState(0,stateMove(goalState.getMoveLoc(), goalState.getMoveType()))));
+        reverseQueue->push(intStatePair(reverseHeuristic(goalState, gameMap), goalState));
+        possibleEndStates.insert(pair<U64,State>(goalState.getHash(), goalState));
+    }
 }	
 
 void Solver::solve() {
-	bool win = true;
+	bool win = false;
 	State * winningState = 0;
 
-	while (true) {
+	while (!win && this->queue->size() > 0) {
         toPushQueue.clear();
         toPushParents.clear();
 
-		int i = 0;
-		while (i < this->chunksize && this->queue->size() > 0)  {
+		int chunksLeft = this->chunksize;
+		while (chunksLeft-- > 0 && this->queue->size() > 0)  {
 			State state = (this->queue->pop()).second;
-
-			vector<Coordinate> boxes = state.getBoxes();
-			win = true;
-			for (size_t j = 0; j < boxes.size(); j++) {
-				if (!this->gameMap->isGoal(boxes[j]))
-				{
-					win = false;
-					break;
-				}
-			}
-			if (win) {
-				this->isDone = true;
-				//solver->gameMap->printState(state);
-				winningState = new State(state);
-				break;
-			}
 
 			vector<State> newStates = this->gameMap->getSuccessorStates(state);
 
@@ -99,35 +86,38 @@ void Solver::solve() {
 				pair<int, State> pa(heur, stateChild);
 				toPushQueue.push_back(pa);
 			}
-			i++;
 		}
-
-		if (win) {
-			break;
-		}
-
 
 		for (size_t i = 0; i < toPushParents.size(); i++) {
+			if (this->parentStates.insert(toPushParents[i]).second) {
+			    this->queue->push(toPushQueue[i]);
 
-			if (!(this->parentStates.insert(toPushParents[i]).second))
-				continue;
-			this->queue->push(toPushQueue[i]);
+                if(this->reverseParentStates.count(toPushParents[i].first)) {
+                    this->isDone = true;
+                    winningState = new State(toPushQueue[i].second);
+                    win = true;
+                    // TODO
+                    // Check map, reverse until no more parents
+                    
+                    // Pick the winner from the endstate map
+                    // Call backtrack
+                    // refactor away break / boolean mess
+                }
+            }
 		}
+
 		//solver->printHeuristics();
+        
+        // TODO reverse batch
+        // TODO reverse insert and check (do not check against forward)
 	}
+
 	if (win) {
-		//cout << "Solution found!" << endl << endl;
-	    //cout << "Total number of expanded nodes: " << solver->noExpandedNodes << endl;
-		//solver->gameMap->printState(*winningState);
 		string history = this->gameMap->backtrack(winningState, &(this->parentStates));
-		//cout << "Solution: " << history << endl;
 		this->solution = new char[history.size()+5];
 		strcpy(this->solution, history.c_str());
 
-		
 		delete winningState;
-
-		//return "D";
 	}
 }
 
@@ -136,42 +126,32 @@ int Solver::heuristic(State state, Map * map) {
 	vector<Coordinate> boxes = state.getBoxes();
 	vector<Coordinate> goals = map->getGoals();
 
-	//TODO opt, 5 verkar bra på nr 2
-	//eller nu verkar 3 och 2 bra xD
 	int sum = 0; //state.getCost();
 
 	for (size_t i = 0; i < boxes.size(); i++) {
 		
 		sum += map->distanceGoal(boxes[i]);
 		
-		//if(min < box_min) cc = i;
-		
-        /*
-         * New search algorithm does not store player state
-		//punicshes the player to go away from a blocking box.
-		if(!map->isGoal(boxes[i])){
-			if(	map->isWall(Coordinate(boxes[i].first+1,boxes[i].second)) && 
-				map->isWall(Coordinate(boxes[i].first-1,boxes[i].second)) && 
-				!map->isWall(Coordinate(boxes[i].first,boxes[i].second+1)) && 
-				!map->isWall(Coordinate(boxes[i].first,boxes[i].second-1))){
-				sum += manhattanDistance(player, boxes[i])*2;
-			}else
-			if(	map->isWall(Coordinate(boxes[i].first,boxes[i].second+1)) && 
-				map->isWall(Coordinate(boxes[i].first,boxes[i].second-1)) && 
-				!map->isWall(Coordinate(boxes[i].first+1,boxes[i].second)) && 
-				!map->isWall(Coordinate(boxes[i].first-1,boxes[i].second))){
-				sum += manhattanDistance(player, boxes[i])*2;
-			}
-		}*/
-		
-		//good if box is in a deadlock and goal.
-        	//TODO expand for goal packing opt
-		if(map->isGoal(boxes[i]) && map->isDeadLock(boxes[i])){
-			sum -= boxes.size();
-		}
+        //good if box is in a deadlock and goal.
+        //TODO expand for goal packing opt
+        if(map->isGoal(boxes[i]) && map->isDeadLock(boxes[i])){
+            sum -= boxes.size();
+        }
+    }
+    //Wtf, increasing when far from goal?
+    //sum -= manhattanDistance(player, boxes[cc]);
+
+    return sum;
+}
+
+int Solver::reverseHeuristic(State state, Map * map) {
+	vector<Coordinate> boxes = state.getBoxes();
+
+	int sum = 0;
+
+	for (size_t i = 0; i < boxes.size(); i++) {
+		sum += map->distanceStart(boxes[i]);
 	}
-	//Wtf, increasing when far from goal?
-	//sum -= manhattanDistance(player, boxes[cc]);
 
 	return sum;
 }

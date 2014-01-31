@@ -41,6 +41,7 @@ class Map {
 		Coordinate playersStart;
 		bool *deadLock;
 		int *goalDistance;
+		int *startDistance;
 
         bool isBlocked(const int x, const int y, const bool boxMap[], bool visited[]) const;
 
@@ -62,8 +63,11 @@ class Map {
 		bool isWall(const Coordinate) const;		
 		bool isDeadLock(const Coordinate) const;
 		int distanceGoal(const Coordinate) const;
+		int distanceStart(const Coordinate) const;
         Coordinate calcNormalizedPosition() const;
         Coordinate calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, bool * visitMap) const;
+		vector<State> getAllEndStates() const;
+		vector<State> getPredecessorStates(const State) const;
 		vector<State> getSuccessorStates(const State) const;
         string backtrack(const State * winningState, unordered_map<U64, parentState> * parentStates) const;
         bool verifySolution(char *sol) const;
