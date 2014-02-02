@@ -49,10 +49,13 @@ class Map {
 
 	public:
 		Map(const string);
-        Map(const Map &);
 		~Map();
+    private:
+        // Not supported
+        Map(const Map &);
         Map & operator=(const Map &);
-		
+
+    public:
 		Coordinate getStart() const;
 		vector<Coordinate> getBoxes() const;
 		vector<Coordinate> getGoals() const;

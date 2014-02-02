@@ -32,7 +32,9 @@ class BucketQueue {
 			this->grabFromFront = true;
 		}
 		~BucketQueue(){
-			//delete buckets;
+            for(size_t i = 0; i < buckets.size(); i++) {
+                if(buckets [i]) delete buckets[i];
+            }
 		}
 
 		void printState() {

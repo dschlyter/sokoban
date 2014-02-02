@@ -35,21 +35,17 @@ Map::Map(const string map){
         nl = next_nl;
     }
 
-	static_map = new char[map_height*map_width];
-	deadLock = new bool[map_height*map_width];
-	goalDistance = new int[map_height*map_width];
-	startDistance = new int[map_height*map_width];
+    long memsize = map_height * map_width;
+	static_map = new char[memsize];
+	deadLock = new bool[memsize];
+	goalDistance = new int[memsize];
+	startDistance = new int[memsize];
 
-	/*for (size_t i = 0; i < map_height; ++i) {
-		static_map[i] = new char[map_width];
-	}*/
+    memset(static_map, 0, sizeof(char)*memsize);
+    memset(deadLock, 0, sizeof(bool)*memsize);
+    memset(goalDistance, 0, sizeof(int)*memsize);
+    memset(startDistance, 0, sizeof(int)*memsize);
 
-	// Allocation
-	/*static_map = new char*[map_height];
-	static_map[0] = new char[map_height*map_width];
-	for (size_t i = 1; i < map_height; ++i)
-		static_map[i] = static_map[i-1] + map_width;
-	*/
 	// Parse
 	size_t row = 0;
 	size_t col = 0;
@@ -145,7 +141,7 @@ Map::Map(const string map){
 	} 
 	
 	
-	// collumn deadlock detection
+	// column deadlock detection
 	for(size_t x=1; x<map_width-1 ;++x){
 		size_t first_dead = 0;
 		bool left_wall = true; 
@@ -239,43 +235,7 @@ Map::~Map(){
 	delete [] static_map;
 	delete [] deadLock;
 	delete [] goalDistance; 
-}
-Map::Map(const Map & other){
-	map_width = other.map_width;
-	map_height = other.map_height;
-    playersStart = other.playersStart;
-    boxesStart = other.boxesStart;
-    goals = other.goals;
-
-	static_map = new char[map_height*map_width];
-    memcpy(static_map, other.static_map, map_height*map_width*sizeof(char));
-
-	deadLock = new bool[map_height*map_width];
-	memcpy(deadLock, other.deadLock, map_height*map_width*sizeof(bool));
-
-	goalDistance = new int[map_height*map_width];
-	memcpy(goalDistance, other.goalDistance, map_height*map_width*sizeof(int));
-}
-Map & Map::operator=(const Map & other){
-	map_width = other.map_width;
-	map_height = other.map_height;
-    playersStart = other.playersStart;
-    boxesStart = other.boxesStart;
-    goals = other.goals;
-
-    delete[] static_map;
-	static_map = new char[map_height*map_width];
-    memcpy(static_map, other.static_map, map_height*map_width*sizeof(char));
-	
-	delete[] deadLock;
-	deadLock = new bool[map_height*map_width];
-	memcpy(deadLock, other.deadLock, map_height*map_width*sizeof(bool));
-    
-	delete[] goalDistance;
-	goalDistance = new int[map_height*map_width];
-	memcpy(goalDistance, other.goalDistance, map_height*map_width*sizeof(int));
-
-	return *this;
+    delete [] startDistance;
 }
 
 vector<Coordinate> Map::getBoxes() const{

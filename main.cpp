@@ -19,8 +19,6 @@ int main(int argc, char *argv[])
     solver->solve();
 
 	char *solution = solver->solution;
-	delete solver;
-
 	cout << solution << endl << flush;
     
 #ifdef VERIFY_SOLUTION
@@ -32,6 +30,8 @@ int main(int argc, char *argv[])
         cout << "Solution verified successfully! :D" << endl;
     }
 #endif
+
+    delete solver;
 
 	return 0;
 }

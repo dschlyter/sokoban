@@ -18,13 +18,16 @@ class compareStates {
 class Solver {
 	public:
 		Solver(int);
+		~Solver();
+    private:
+        // Not supported
+        Solver(const Solver &);
+        Solver & operator=(const Solver &);
+    public:
 		void init(char*);
         void solve();
 		void printHeuristics();
 
-        // TODO gameMap writes out of bounds, find where and and fix
-        double memoryOverwriteHere;
-        double memoryOverwriteHere2;
 		Map * gameMap;
 		char * solution;
 

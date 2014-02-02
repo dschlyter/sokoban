@@ -30,6 +30,7 @@ class State {
 		State(){}
 
         static void initZobristHash(int width, int height);
+        static void disposeZobristHash();
 	
 		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const Coordinate loc);
 		State(const Coordinate playerPosition, const vector<Coordinate> boxPositions, const int pushCount, const Coordinate loc, const int move);

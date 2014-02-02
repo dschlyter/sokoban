@@ -17,6 +17,15 @@ Solver::Solver(int chunksize) {
 	this->chunksize = chunksize;
 }
 
+Solver::~Solver() {
+    if(this->gameMap) delete gameMap;
+    if(this->queue) delete queue;
+    if(this->reverseQueue) delete reverseQueue;
+    if(this->solution) delete[] solution;
+
+    State::disposeZobristHash();
+}
+
 /*
 void Solver::printHeuristics() {
 	TStorageNode<int, intStatePair> * node = queue->GetFirst();

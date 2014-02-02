@@ -62,6 +62,10 @@ void State::initZobristHash(int width, int height){
 	}
 }
 
+void State::disposeZobristHash() {
+    if(zobrist) delete[] zobrist;
+}
+
 // Generate 64-bit random number (naively)
 U64 State::rand64() {
 	return rand() ^ ((U64) rand() << 15) ^ ((U64) rand() << 30) ^ ((U64) rand() << 45) ^ ((U64) rand() << 60);
