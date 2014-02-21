@@ -23,6 +23,7 @@
 #include <unordered_map>
 using namespace std;
 
+// TODO refactor this mess...
 typedef pair<Coordinate, int> stateMove;
 typedef pair<U64,stateMove> parentState;
 typedef pair<U64,parentState> psMap;
@@ -72,7 +73,7 @@ class Map {
 		vector<State> getAllEndStates() const;
 		vector<State> getPredecessorStates(const State) const;
 		vector<State> getSuccessorStates(const State) const;
-        string backtrack(const State * winningState, unordered_map<U64, parentState> * parentStates) const;
+        string backtrack(const parentState finalMove, unordered_map<U64, parentState> * parentStates) const;
         bool verifySolution(char *sol) const;
         void printState(const State & state) const;
 		friend ostream& operator<<(ostream &out, const Map &a );

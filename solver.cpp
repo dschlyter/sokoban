@@ -13,8 +13,9 @@ bool compareStates::operator() (const intStatePair & left, const intStatePair & 
 };
 
 
-Solver::Solver(int chunksize) {
+Solver::Solver(int chunksize, int reverseChunksize) {
 	this->chunksize = chunksize;
+    this->reverseChunksize = reverseChunksize;
 }
 
 Solver::~Solver() {
@@ -65,7 +66,7 @@ void Solver::init(char* map) {
     vector<State> goalStates = gameMap->getAllEndStates();
     for(size_t i=0; i<goalStates.size(); i++) {
         State goalState = goalStates[i];
-        reverseParentStates.insert(psMap(goalState.getHash(),parentState(0,stateMove(goalState.getMoveLoc(), goalState.getMoveType()))));
+        reverseParentStates.insert(psMap(goalState.getHash(), parentState(0,stateMove(goalState.getMoveLoc(), goalState.getMoveType()))));
         reverseQueue->push(intStatePair(reverseHeuristic(goalState, gameMap), goalState));
         possibleEndStates.insert(pair<U64,State>(goalState.getHash(), goalState));
     }
@@ -73,7 +74,7 @@ void Solver::init(char* map) {
 
 void Solver::solve() {
 	bool win = false;
-	State * winningState = 0;
+    parentState finalMove;
 
 	while (!win && this->queue->size() > 0) {
         toPushQueue.clear();
@@ -98,35 +99,69 @@ void Solver::solve() {
 		}
 
 		for (size_t i = 0; i < toPushParents.size(); i++) {
+            // TODO trying a bloom filter here could be a good idea, if profiling indicates a hotspot
 			if (this->parentStates.insert(toPushParents[i]).second) {
 			    this->queue->push(toPushQueue[i]);
 
+                // TODO trying a bloom filter here could be a good idea, if profiling indicates a hotspot
                 if(this->reverseParentStates.count(toPushParents[i].first)) {
+                    // TODO when is this used
                     this->isDone = true;
-                    winningState = new State(toPushQueue[i].second);
                     win = true;
-                    // TODO
-                    // Check map, reverse until no more parents
-                    
-                    // Pick the winner from the endstate map
-                    // Call backtrack
-                    // refactor away break / boolean mess
+
+                    U64 moveId = toPushParents[i].first;
+                    while (true) {
+                        parentState reverseParent = this->reverseParentStates[moveId];
+                        parentState parent = parentState(moveId, reverseParent.second);
+                        U64 nextMoveId = reverseParent.first; 
+                        this->parentStates.insert(psMap(nextMoveId, parent));
+                        moveId = nextMoveId;
+                        if(moveId == 0) {
+                            finalMove = parent;
+                            break;
+                        }
+                    }
                 }
             }
 		}
-
-		//solver->printHeuristics();
         
-        // TODO reverse batch
+        // TODO convert to local variable???
+        toPushQueue.clear();
+        toPushParents.clear();
+
+        chunksLeft = this->reverseChunksize;
+		while (chunksLeft-- > 0 && this->reverseQueue->size() > 0)  {
+			State state = (this->reverseQueue->pop()).second;
+
+			vector<State> newStates = this->gameMap->getPredecessorStates(state);
+
+			for (size_t j = 0; j < newStates.size(); j++) {
+				State stateChild = newStates[j];
+
+				toPushParents.push_back(psMap(stateChild.getHash(), parentState(state.getHash(), stateMove(stateChild.getMoveLoc(), stateChild.getMoveType()))));
+
+				int heur = this->heuristic(stateChild, this->gameMap);
+
+				pair<int, State> pa(heur, stateChild);
+				toPushQueue.push_back(pa);
+			}
+		}
+
+		for (size_t i = 0; i < toPushParents.size(); i++) {
+            // TODO trying a bloom filter here could be a good idea, if profiling indicates a hotspot
+            // break;
+			if (this->reverseParentStates.insert(toPushParents[i]).second) {
+			    this->reverseQueue->push(toPushQueue[i]);
+            }
+		}
+
         // TODO reverse insert and check (do not check against forward)
 	}
 
 	if (win) {
-		string history = this->gameMap->backtrack(winningState, &(this->parentStates));
+		string history = this->gameMap->backtrack(finalMove, &(this->parentStates));
 		this->solution = new char[history.size()+5];
 		strcpy(this->solution, history.c_str());
-
-		delete winningState;
 	}
 }
 
@@ -142,7 +177,6 @@ int Solver::heuristic(State state, Map * map) {
 		sum += map->distanceGoal(boxes[i]);
 		
         //good if box is in a deadlock and goal.
-        //TODO expand for goal packing opt
         if(map->isGoal(boxes[i]) && map->isDeadLock(boxes[i])){
             sum -= boxes.size();
         }

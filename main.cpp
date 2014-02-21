@@ -5,16 +5,17 @@
 #include "solver.h"
 
 #define BUFFERSIZE 4096 
-#define CHUNKSIZE 900
+#define CHUNKSIZE 500
+#define REVERSE_CHUNKSIZE 100
 
-int main(int argc, char *argv[])
+int main() // TODO remove (int argc, char *argv[])
 {
     char buffer[BUFFERSIZE];
     memset(buffer, 0, BUFFERSIZE);
 	
-	ssize_t n = fread(buffer, 1, BUFFERSIZE, stdin);
+	fread(buffer, 1, BUFFERSIZE, stdin);
 
-	Solver * solver = new Solver(CHUNKSIZE);
+	Solver * solver = new Solver(CHUNKSIZE, REVERSE_CHUNKSIZE);
 	solver->init(buffer);
     solver->solve();
 

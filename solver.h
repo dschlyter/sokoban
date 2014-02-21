@@ -17,7 +17,7 @@ class compareStates {
 
 class Solver {
 	public:
-		Solver(int);
+		Solver(int, int);
 		~Solver();
     private:
         // Not supported
@@ -52,6 +52,7 @@ class Solver {
 
 		bool isDone;
 		int chunksize;
+        int reverseChunksize;
 		int noExpandedNodes;
 };
 

@@ -398,13 +398,14 @@ vector<State> Map::getPredecessorStates(const State state) const {
             int moveArrayIndex = moveCoord.second * map_width + moveCoord.first;
             if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL){
                 if(boxMap[moveArrayIndex]){
-                    int pullArrayIndex = moveArrayIndex - (moveY[i]*map_width)*2 - moveX[i] * 2;
+                    Coordinate pullCoord = Coordinate(tmp.first - moveX[i], tmp.second - moveY[i]);
+                    int pullArrayIndex  = pullCoord.second * map_width + pullCoord.first;
                     //Check if box can be pulled
                     if(static_map[pullArrayIndex] == WALL || boxMap[pullArrayIndex]){
                         continue;
                     }
                     //Add to list of possible pushes
-                    pushes.push_back(boxPush(moveCoord, i));
+                    pushes.push_back(boxPush(pullCoord, i));
                 } else {
                     //If empty square, keep on searching on neighbours by pushing into queue
                     visitMap[moveArrayIndex] = 1;
@@ -421,13 +422,17 @@ vector<State> Map::getPredecessorStates(const State state) const {
         boxPush tmp = pushes[i];
         Coordinate newPlayerPos = tmp.first;
         int moveType = tmp.second;
-        Coordinate newBoxPos = Coordinate(newPlayerPos.first - moveX[moveType], newPlayerPos.second - moveY[moveType]);
-        int playerArrayIndex = newPlayerPos.second * map_width + newPlayerPos.first;
+        Coordinate newBoxPos = Coordinate(newPlayerPos.first + moveX[moveType], newPlayerPos.second + moveY[moveType]);
+        Coordinate oldBoxPos = Coordinate(newPlayerPos.first + 2*moveX[moveType], newPlayerPos.second + 2*moveY[moveType]);
+        
+        // TODO remove
+        //int playerArrayIndex = newPlayerPos.second * map_width + newPlayerPos.first;
         int boxArrayIndex = newBoxPos.second * map_width + newBoxPos.first;
+        int oldBoxArrayIndex = oldBoxPos.second * map_width + oldBoxPos.first;
 
         //temporary change of boxmap for the new stage
         boxMap[boxArrayIndex] = true;
-        boxMap[playerArrayIndex] = false;
+        boxMap[oldBoxArrayIndex] = false;
 
         Coordinate normalizedPosition;
         memset(visitMap2, 0, sizeof(bool)*map_width*map_height);
@@ -435,17 +440,17 @@ vector<State> Map::getPredecessorStates(const State state) const {
 
         //reset boxMap
         boxMap[boxArrayIndex] = false;
-        boxMap[playerArrayIndex] = true;
+        boxMap[oldBoxArrayIndex] = true;
 
         //change box location and push
         vector<Coordinate> newBoxes = vector<Coordinate>(boxes);
         for(size_t j=0; j<newBoxes.size(); j++){
-            if(newBoxes[j] == newPlayerPos){
+            if(newBoxes[j] == oldBoxPos){
                 newBoxes[j] = newBoxPos;
             }
         }
 
-        ret.push_back(State(normalizedPosition, newBoxes, cost+1, newPlayerPos, tmp.second));
+        ret.push_back(State(normalizedPosition, newBoxes, cost+1, newBoxPos, tmp.second));
     }
 
     return ret;
@@ -740,7 +745,8 @@ vector<State> Map::getSuccessorStates(const State state) const {
     return ret;
 }
 
-string Map::backtrack(const State * winningState, unordered_map<U64, parentState> * parentStates) const{
+// TODO move to solver, because this is method for solving
+string Map::backtrack(const parentState finalMove, unordered_map<U64, parentState> * parentStates) const{
     if(printCounts) {
         cerr << "Normalized position stats:" << endl;
         cerr << "No new path: " << aCount << endl;
@@ -753,7 +759,7 @@ string Map::backtrack(const State * winningState, unordered_map<U64, parentState
     string ret = "";
 
     //Initialize box state from winning state
-    vector<Coordinate> boxes = winningState->getBoxes();
+    vector<Coordinate> boxes = this->getGoals();
     bool boxMap[map_height*map_width];
     memset(boxMap, 0, sizeof(bool)*map_width*map_height);
     for(size_t i=0; i<boxes.size(); i++){
@@ -765,10 +771,10 @@ string Map::backtrack(const State * winningState, unordered_map<U64, parentState
     string historyMap[map_height*map_width];
 
     //Declare and init a few variables used in the backtrack
-    Coordinate currentPos = winningState->getMoveLoc();
-    U64 hash = (*parentStates)[winningState->getHash()].first;
+    U64 hash = (*parentStates)[finalMove.first].first;
+    Coordinate currentPos = (*parentStates)[finalMove.first].second.first;
+    int moveType = (*parentStates)[finalMove.first].second.second;
     Coordinate goal;
-    int moveType = winningState->getMoveType();
 
     //Some static variables used for the search
     static string move[] = { "L", "U", "R", "D" };
