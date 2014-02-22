@@ -8,7 +8,7 @@
 #define CHUNKSIZE 500
 #define REVERSE_CHUNKSIZE 100
 
-int main() // TODO remove (int argc, char *argv[])
+int main() 
 {
     char buffer[BUFFERSIZE];
     memset(buffer, 0, BUFFERSIZE);

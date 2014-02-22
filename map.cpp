@@ -281,37 +281,38 @@ Coordinate Map::calcNormalizedPosition() const{
 
 }
 
+int Map::calcNormalizedDfs(int index, const bool * boxMap, bool * visitMap) const {
+    visitMap[index] = 1;
+    //cerr << index << " " << map_width * map_height << endl;
+
+    int ret = index;
+
+    int newIndex = index - 1;
+    if(!visitMap[newIndex] && static_map[newIndex] != WALL && !boxMap[newIndex]){
+        ret = min(ret, calcNormalizedDfs(newIndex, boxMap, visitMap));
+    }
+    newIndex = index - map_width;
+    if(!visitMap[newIndex] && static_map[newIndex] != WALL && !boxMap[newIndex]){
+        ret = min(ret, calcNormalizedDfs(newIndex, boxMap, visitMap));
+    }
+    newIndex = index + map_width;
+    if(!visitMap[newIndex] && static_map[newIndex] != WALL && !boxMap[newIndex]){
+        ret = min(ret, calcNormalizedDfs(newIndex, boxMap, visitMap));
+    }
+    newIndex = index + 1;
+    if(!visitMap[newIndex] && static_map[newIndex] != WALL && !boxMap[newIndex]){
+        ret = min(ret, calcNormalizedDfs(newIndex, boxMap, visitMap));
+    }
+
+    return ret;
+}
 
 //Calcs the normalized player position using bfs
 //Uses sent in maps for computational efficiency
 Coordinate Map::calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, bool * visitMap) const{
-    static int moveX[] = { -1, 0, 1, 0 };
-    static int moveY[] = { 0, -1, 0, 1 };
-
-    int minX = map_width+1;
-    int minY = map_height+1;
-
-    queue<Coordinate> q; 
-    q.push(startPos);
-    while(!q.empty()){
-        Coordinate tmp = q.front();
-        q.pop();
-        if(tmp.second < minY || (tmp.second == minY && tmp.first < minX)){
-            minX = tmp.first;
-            minY = tmp.second;
-        }
-
-        for(int i=0; i<4; i++){
-            Coordinate moveCoord = Coordinate(tmp.first + moveX[i], tmp.second + moveY[i]);
-            int moveArrayIndex = moveCoord.second * map_width + moveCoord.first;
-            if(!visitMap[moveArrayIndex] && static_map[moveArrayIndex] != WALL && !boxMap[moveArrayIndex]){
-                visitMap[moveArrayIndex] = 1;
-                q.push(Coordinate(moveCoord.first,moveCoord.second));
-            }
-        }
-    }
-
-    return Coordinate(minX,minY);
+    int startIndex = startPos.second * map_width + startPos.first;
+    int index = calcNormalizedDfs(startIndex, boxMap, visitMap);
+    return Coordinate(index % map_width, index / map_width);
 }
 
 // There can be multiple possible player positions for an end state
@@ -425,8 +426,6 @@ vector<State> Map::getPredecessorStates(const State state) const {
         Coordinate newBoxPos = Coordinate(newPlayerPos.first + moveX[moveType], newPlayerPos.second + moveY[moveType]);
         Coordinate oldBoxPos = Coordinate(newPlayerPos.first + 2*moveX[moveType], newPlayerPos.second + 2*moveY[moveType]);
         
-        // TODO remove
-        //int playerArrayIndex = newPlayerPos.second * map_width + newPlayerPos.first;
         int boxArrayIndex = newBoxPos.second * map_width + newBoxPos.first;
         int oldBoxArrayIndex = oldBoxPos.second * map_width + oldBoxPos.first;
 

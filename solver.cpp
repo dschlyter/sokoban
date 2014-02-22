@@ -162,6 +162,7 @@ void Solver::solve() {
 		string history = this->gameMap->backtrack(finalMove, &(this->parentStates));
 		this->solution = new char[history.size()+5];
 		strcpy(this->solution, history.c_str());
+        cerr << this->parentStates.size() << " + " << this->reverseParentStates.size() << " states visited" << endl;
 	}
 }
 

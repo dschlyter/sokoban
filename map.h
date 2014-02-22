@@ -48,6 +48,11 @@ class Map {
 
 		int manhattanDistance(const Coordinate, const Coordinate) const;
 
+        inline int min(int a, int b) const {
+            if(a < b) return a;
+            return b;
+        }
+
 	public:
 		Map(const string);
 		~Map();
@@ -68,6 +73,8 @@ class Map {
 		bool isDeadLock(const Coordinate) const;
 		int distanceGoal(const Coordinate) const;
 		int distanceStart(const Coordinate) const;
+        int calcNormalizedDfs(int, const bool *, bool *) const;
+        Coordinate calcNormalizedDfs() const;
         Coordinate calcNormalizedPosition() const;
         Coordinate calcNormalizedPosition(const Coordinate startPos, const bool * boxMap, bool * visitMap) const;
 		vector<State> getAllEndStates() const;
